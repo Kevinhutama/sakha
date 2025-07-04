@@ -159,6 +159,13 @@ a:hover {
   color: var(--primary-color);
 }
 
+/* Logo Styles
+--------------------------------------------------------------*/
+.logo {
+  max-width: 190px;
+  height: auto;
+}
+
 .fs-1{
   font-size: 1.75rem !important;
 }
