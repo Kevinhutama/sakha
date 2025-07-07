@@ -1,0 +1,126 @@
+- Understanding current BAU
+    - Order Process
+    - Stock
+    - 
+
+
+
+Pages
+User Facing
+- Navigations:
+    - Homepage
+    - Products
+    - Cart
+    - User
+
+- Home
+    - Slides
+        Image
+        Text
+    - Popular Products
+    - Video Teaser
+    - Popular Categories (3 Products)
+
+- Products
+    - List of Product
+    - Filter Panel
+        Categories
+        Price
+- Product Detail
+    - Image
+    - Name
+    - Description
+    - Price
+    - Variants
+        - Color
+        - Size
+        - Stock?
+
+- User
+    - Login Page
+        - Manual
+        - Google
+        - Facebook
+    - Profile
+    - Orders
+        - Confirmed Order
+        - Sent Order
+
+- Cart
+   - List of Products
+   - Total Price
+
+- Checkout
+    - Shipping Address
+    - Payment Method (Only QRIS)
+    - Shipping Fee?
+        - Integrate with 3rd party for the estimation?
+        - Courier List? JNE, JNT
+    - Place Order
+
+
+
+Admin Facing:
+- Dashboard
+    - Sales Information
+        - Total Sales
+        - Total number of 'Confirmed', 'Pending Delivery'
+    - Print Report
+- Product Categories
+- Products
+    - Image
+        - Product Image
+        - Unique Per Color?
+        - Header Image?
+    - Price
+    - Product Specifications
+    - Category
+    - Hide
+
+- Orders
+    - Confirmed
+    - Sent
+- Users
+    - Email
+    - Phone Number
+    - Address
+
+
+Buyer Experience:
+- Enter the website
+- View homepage with slides, popular products, video teaser, and categories
+- Navigate to products page
+- Filter products by categories and price
+- View product details
+- Add products to cart
+- View cart with total price
+- Proceed to checkout
+- Recieve order confirmation via Email
+
+
+Admin Experience
+- Get Notified of new orders via email
+- View 'Orders' Page for 'Confirmed Order'
+- Update order status as 'Sent'
+
+
+Out of Scopes:
+- Payment Method other than QRIS
+- Shipping Fee Calculation
+- Chat, Comment & Review
+- Wishlist
+- Multi Languages
+- 
+
+
+
+
+Documents / items to prepare:
+    - Logo Black Color Word with PNG Image
+    - Nomor Rekening Bank
+    - Nomor NPWP Perusahaan
+    - NIB (Nomor Induk Berusaha) / SIUP (Surat Izin Usaha Perdagangan) dan TDP(Tanda Daftar Perusahaan)
+    - Akta Pendirian Perusahaan
+    - SK Menkeh dari Akta Pendirian Perushaan
+    - Foto KTP Direktur
+    - Foto2 Products
