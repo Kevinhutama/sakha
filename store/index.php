@@ -1,3 +1,32 @@
+<?php
+// Database configuration - adjust these values according to your setup
+$host = 'localhost';
+$dbname = 'admin_portal';
+$username = 'root';
+$password = '';
+
+// Get carousel images from database
+$carousel_images = [];
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    
+    $stmt = $pdo->prepare("SELECT * FROM carousel_images WHERE is_active = 1 ORDER BY display_order ASC");
+    $stmt->execute();
+    $carousel_images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    // In case of database error, use empty array (no carousel will be shown)
+    $carousel_images = [];
+}
+
+// Function to get appropriate image path based on screen size
+function getImagePath($image, $isMobile = false) {
+    if ($isMobile && !empty($image['mobile_image_path'])) {
+        return $image['mobile_image_path'];
+    }
+    return $image['web_image_path'];
+}
+?>
 <!DOCTYPE html>
 <html>
   <head>
@@ -182,48 +211,40 @@
     <section id="billboard" class="position-relative overflow-hidden">
       <div class="swiper main-swiper">
         <div class="swiper-wrapper">
-          <div class="swiper-slide" style="background-image: url(images/banner-image.jpg); background-size: cover; background-repeat: no-repeat; height: 100vh; background-position: center;">
-            <div class="container ">
-              <div class="row">
-                <div class="offset-md-1 col-md-6">
-                  <div class="banner-content">
-                    <h2>Sajadah with Alquran</h2>
-                    <p class="fs-3">Sacred bundle for spiritual practice </p>
-                    <a href="single-product.html" class="btn">Shop Now</a>
+          <?php if (!empty($carousel_images)): ?>
+            <?php foreach ($carousel_images as $index => $image): ?>
+              <div class="swiper-slide" style="background-image: url(<?php echo htmlspecialchars(getImagePath($image)); ?>); background-size: cover; background-repeat: no-repeat; height: 100vh; background-position: center;">
+                <div class="container">
+                  <div class="row">
+                    <div class="<?php echo ($index % 2 == 0) ? 'offset-md-1 col-md-6' : 'offset-md-6 col-md-6'; ?>">
+                      <div class="banner-content">
+                        <h2><?php echo htmlspecialchars($image['title']); ?></h2>
+                        <p class="fs-3"><?php echo htmlspecialchars($image['description']); ?></p>
+                        <a href="<?php echo htmlspecialchars($image['button_url']); ?>" class="btn"><?php echo htmlspecialchars($image['button_text']); ?></a>
+                      </div>
+                    </div>
+                    <div class="col-md-5"></div>
                   </div>
                 </div>
-                <div class="col-md-5"></div>
               </div>
-            </div>
-          </div>
-          <div class="swiper-slide" style="background-image: url(images/banner-image1.jpg); background-size: cover; background-repeat: no-repeat; height: 100vh; background-position: center;">
-            <div class="container">
-              <div class="row">
-                <div class="offset-md-6 col-md-6">
-                  <div class="banner-content">
-                    <h2>Sajadah with Perfume</h2>
-                    <p class="fs-3">Prayer mat with divine fragrance & spiritual comfort with blessed scents</p>
-                    <a href="single-product.html" class="btn">Shop Now</a>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <!-- Fallback content if no carousel images are available -->
+            <div class="swiper-slide" style="background-image: url(images/carousel/banner-image.jpg); background-size: cover; background-repeat: no-repeat; height: 100vh; background-position: center;">
+              <div class="container">
+                <div class="row">
+                  <div class="offset-md-1 col-md-6">
+                    <div class="banner-content">
+                      <h2>Welcome to Sakha</h2>
+                      <p class="fs-3">Your spiritual companion for prayer and worship</p>
+                      <a href="shop.html" class="btn">Shop Now</a>
+                    </div>
                   </div>
+                  <div class="col-md-5"></div>
                 </div>
-                <div class="col-md-5"></div>
               </div>
             </div>
-          </div>
-          <div class="swiper-slide" style="background-image: url(images/banner-image2.jpg); background-size: cover; background-repeat: no-repeat; height: 100vh; background-position: center;">
-            <div class="container">
-              <div class="row">
-                <div class="offset-md-1 col-md-6">
-                  <div class="banner-content">
-                    <h2>Shell Shape Decor</h2>
-                    <p class="fs-3">Buy this beautiful unique pieces of shell shape vase decors for your plants of room.</p>
-                    <a href="single-product.html" class="btn">Shop Now</a>
-                  </div>
-                </div>
-                <div class="col-md-5"></div>
-              </div>
-            </div>
-          </div>
+          <?php endif; ?>
         </div>
         <div class="main-slider-pagination position-absolute text-center"></div>
       </div>
