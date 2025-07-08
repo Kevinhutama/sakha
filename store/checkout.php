@@ -1,32 +1,3 @@
-<?php
-// Database configuration - adjust these values according to your setup
-$host = 'localhost';
-$dbname = 'admin_portal';
-$username = 'root';
-$password = '';
-
-// Get carousel images from database
-$carousel_images = [];
-try {
-    $pdo = new PDO("mysql:host=$host;dbname=$dbname", $username, $password);
-    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
-    $stmt = $pdo->prepare("SELECT * FROM carousel_images WHERE is_active = 1 ORDER BY display_order ASC");
-    $stmt->execute();
-    $carousel_images = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} catch (PDOException $e) {
-    // In case of database error, use empty array (no carousel will be shown)
-    $carousel_images = [];
-}
-
-// Function to get appropriate image path based on screen size
-function getImagePath($image, $isMobile = false) {
-    if ($isMobile && !empty($image['mobile_image_path'])) {
-        return $image['mobile_image_path'];
-    }
-    return $image['web_image_path'];
-}
-?>
 <!DOCTYPE html>
 <html>
   <head>
@@ -52,6 +23,9 @@ function getImagePath($image, $isMobile = false) {
   </head>
   <body>
     <svg xmlns="http://www.w3.org/2000/svg" style="display: none;">
+      <symbol id="search" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+        <path fill="currentColor" d="M19 3C13.488 3 9 7.488 9 13c0 2.395.84 4.59 2.25 6.313L3.281 27.28l1.439 1.44l7.968-7.969A9.922 9.922 0 0 0 19 23c5.512 0 10-4.488 10-10S24.512 3 19 3zm0 2c4.43 0 8 3.57 8 8s-3.57 8-8 8s-8-3.57-8-8s3.57-8 8-8z" />
+      </symbol>
       <symbol xmlns="http://www.w3.org/2000/svg" id="angle-right" viewBox="0 0 32 32">
         <path fill="currentColor" d="M12.969 4.281L11.53 5.72L21.812 16l-10.28 10.281l1.437 1.438l11-11l.687-.719l-.687-.719z"/>
       </symbol>
@@ -85,6 +59,36 @@ function getImagePath($image, $isMobile = false) {
       <symbol xmlns="http://www.w3.org/2000/svg" id="linkedin" viewBox="0 0 24 24">
         <path fill="currentColor" d="M6.94 5a2 2 0 1 1-4-.002a2 2 0 0 1 4 .002zM7 8.48H3V21h4V8.48zm6.32 0H9.34V21h3.94v-6.57c0-3.66 4.77-4 4.77 0V21H22v-7.93c0-6.17-7.06-5.94-8.72-2.91l.04-1.68z" />
       </symbol>
+      <symbol xmlns="http://www.w3.org/2000/svg" id="cart-outline" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5zM3.102 4l.84 4.479 9.144-.459L13.89 4H3.102zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4zm-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2zm7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2z" />
+      </symbol>
+      <symbol xmlns="http://www.w3.org/2000/svg" id="quality" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M9.669.864 8 0 6.331.864l-1.858.282-.842 1.68-1.337 1.32L2.6 6l-.306 1.854 1.337 1.32.842 1.68 1.858.282L8 12l1.669-.864 1.858-.282.842-1.68 1.337-1.32L13.4 6l.306-1.854-1.337-1.32-.842-1.68L9.669.864zm1.196 1.193.684 1.365 1.086 1.072L12.387 6l.248 1.506-1.086 1.072-.684 1.365-1.51.229L8 10.874l-1.355-.702-1.51-.229-.684-1.365-1.086-1.072L3.614 6l-.25-1.506 1.087-1.072.684-1.365 1.51-.229L8 1.126l1.356.702 1.509.229z" />
+        <path fill="currentColor" d="M4 11.794V16l4-1 4 1v-4.206l-2.018.306L8 13.126 6.018 12.1 4 11.794z" />
+      </symbol>
+      <symbol xmlns="http://www.w3.org/2000/svg" id="price-tag" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M6 4.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0zm-1 0a.5.5 0 1 0-1 0 .5.5 0 0 0 1 0z" />
+        <path fill="currentColor" d="M2 1h4.586a1 1 0 0 1 .707.293l7 7a1 1 0 0 1 0 1.414l-4.586 4.586a1 1 0 0 1-1.414 0l-7-7A1 1 0 0 1 1 6.586V2a1 1 0 0 1 1-1zm0 5.586 7 7L13.586 9l-7-7H2v4.586z" />
+      </symbol>
+      <symbol xmlns="http://www.w3.org/2000/svg" id="shield-plus" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z" />
+        <path fill="currentColor" d="M8 4.5a.5.5 0 0 1 .5.5v1.5H10a.5.5 0 0 1 0 1H8.5V9a.5.5 0 0 1-1 0V7.5H6a.5.5 0 0 1 0-1h1.5V5a.5.5 0 0 1 .5-.5z" />
+      </symbol>
+      <symbol id="star-fill" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z" />
+      </symbol>
+      <symbol id="star-empty" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M2.866 14.85c-.078.444.36.791.746.593l4.39-2.256 4.389 2.256c.386.198.824-.149.746-.592l-.83-4.73 3.522-3.356c.33-.314.16-.888-.282-.95l-4.898-.696L8.465.792a.513.513 0 0 0-.927 0L5.354 5.12l-4.898.696c-.441.062-.612.636-.283.95l3.523 3.356-.83 4.73zm4.905-2.767-3.686 1.894.694-3.957a.565.565 0 0 0-.163-.505L1.71 6.745l4.052-.576a.525.525 0 0 0 .393-.288L8 2.223l1.847 3.658a.525.525 0 0 0 .393.288l4.052.575-2.906 2.77a.565.565 0 0 0-.163.506l.694 3.957-3.686-1.894a.503.503 0 0 0-.461 0z" />
+      </symbol>
+      <symbol id="star-half" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+        <path fill="currentColor" d="M5.354 5.119 7.538.792A.516.516 0 0 1 8 .5c.183 0 .366.097.465.292l2.184 4.327 4.898.696A.537.537 0 0 1 16 6.32a.548.548 0 0 1-.17.445l-3.523 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256a.52.52 0 0 1-.146.05c-.342.06-.668-.254-.6-.642l.83-4.73L.173 6.765a.55.55 0 0 1-.172-.403.58.58 0 0 1 .085-.302.513.513 0 0 1 .37-.245l4.898-.696zM8 12.027a.5.5 0 0 1 .232.056l3.686 1.894-.694-3.957a.565.565 0 0 1 .162-.505l2.907-2.77-4.052-.576a.525.525 0 0 1-.393-.288L8.001 2.223 8 2.226v9.8z" />
+      </symbol>
+      <symbol xmlns="http://www.w3.org/2000/svg" id="plus" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19 11h-6V5a1 1 0 0 0-2 0v6H5a1 1 0 0 0 0 2h6v6a1 1 0 0 0 2 0v-6h6a1 1 0 0 0 0-2Z"/>
+      </symbol>
+      <symbol xmlns="http://www.w3.org/2000/svg" id="minus" viewBox="0 0 24 24">
+        <path fill="currentColor" d="M19 11H5a1 1 0 0 0 0 2h14a1 1 0 0 0 0-2Z"/>
+      </symbol>
     </svg>
     
     <div id="preloader">
@@ -93,13 +97,13 @@ function getImagePath($image, $isMobile = false) {
     <header id="header" class="site-header">
       <nav id="header-nav" class="navbar navbar-expand-lg px-3">
         <div class="container">
-          <a class="navbar-brand d-lg-none" href="index.html">
+          <a class="navbar-brand d-lg-none" href="index.php">
             <img src="images/sakha-logo-text.png" class="logo">
           </a>
           <button class="navbar-toggler d-flex d-lg-none order-3 p-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#bdNavbar" aria-controls="bdNavbar" aria-expanded="false" aria-label="Toggle navigation">Menu</button>
           <div class="offcanvas offcanvas-end" tabindex="-1" id="bdNavbar" aria-labelledby="bdNavbarOffcanvasLabel">
             <div class="offcanvas-header px-4 pb-0">
-              <a class="navbar-brand" href="index.html">
+              <a class="navbar-brand" href="index.php">
                 <img src="images/sakha-logo-text.png" class="logo">
               </a>
               <button type="button" class="btn-close btn-close-black" data-bs-dismiss="offcanvas" aria-label="Close" data-bs-target="#bdNavbar"></button>
@@ -115,7 +119,7 @@ function getImagePath($image, $isMobile = false) {
                     <a class="nav-link ms-0" href="shop.html">Shop</a>
                   </li>
                   <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle ms-0" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Products<svg class="bi" width="18" height="18"><use xlink:href="#chevron-down"></use></svg></a>
+                    <a class="nav-link dropdown-toggle ms-0" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Pages<svg class="bi" width="18" height="18"><use xlink:href="#chevron-down"></use></svg></a>
                     <ul class="dropdown-menu">
                       <li>
                         <a href="about.html" class="dropdown-item fs-5 fw-medium">About <span class="text-primary">(PRO)</span></a>
@@ -133,7 +137,7 @@ function getImagePath($image, $isMobile = false) {
                         <a href="cart.html" class="dropdown-item fs-5 fw-medium">Cart <span class="text-primary">(PRO)</span></a>
                       </li>
                       <li>
-                        <a href="checkout.php" class="dropdown-item fs-5 fw-medium">Checkout <span class="text-primary">(PRO)</span></a>
+                        <a href="checkout.php" class="dropdown-item active fs-5 fw-medium">Checkout <span class="text-primary">(PRO)</span></a>
                       </li>
                       <li>
                         <a href="blog.html" class="dropdown-item fs-5 fw-medium">Blog <span class="text-primary">(PRO)</span></a>
@@ -144,11 +148,14 @@ function getImagePath($image, $isMobile = false) {
                       <li>
                         <a href="contact.html" class="dropdown-item fs-5 fw-medium">Contact <span class="text-primary">(PRO)</span></a>
                       </li>
+                      <li>
+                        <a href="https://templatesjungle.gumroad.com/l/vaso-interior-decor-ecommerce-website-template" target="_blank" class="dropdown-item fs-5 fw-bold">Get Pro</a>
+                      </li>
                     </ul>
                   </li>                  
                 </ul>
                 
-                <a class="navbar-brand d-none d-lg-block me-0" href="index.html">
+                <a class="navbar-brand d-none d-lg-block me-0" href="index.php">
                   <img src="images/sakha-logo-text.png" class="logo">
                 </a>
 
@@ -157,7 +164,7 @@ function getImagePath($image, $isMobile = false) {
                     <div id="search-bar" class="border-right d-none d-lg-block">
                       <form action="" autocomplete="on">
                         <input id="search" class="text-dark" name="search" type="text" placeholder="Search Here...">
-                        <a type="submit" class="nav-link me-0" href="#" style="opacity: 0">Search</a>
+                        <a type="submit" class="nav-link me-0" href="#">Search</a>
                       </form>
                     </div>
                   </li>
@@ -175,7 +182,7 @@ function getImagePath($image, $isMobile = false) {
                         <li class="list-group-item bg-transparent border-dark d-flex justify-content-between lh-sm">
                           <div>
                             <h5 class="card-title fs-3 text-capitalize">
-                              <a href="single-product.html">Red Sajadah</a>
+                              <a href="single-product.html">Matt Black</a>
                             </h5>
                             <small class="text-body-secondary">Soft texture matt coated.</small>
                           </div>
@@ -196,8 +203,8 @@ function getImagePath($image, $isMobile = false) {
                         </li>
                       </ul>
                       <div class="d-flex flex-wrap justify-content-center">
-                        <a class="w-100 btn btn-dark mb-1" type="submit">View Cart</a>
-                        <a class="w-100 btn btn-primary" href="checkout.php">Go to checkout</a>
+                        <a href="cart.html" class="w-100 btn btn-dark mb-1" type="submit">View Cart</a>
+                        <a href="checkout.html" class="w-100 btn btn-primary" type="submit">Go to checkout</a>
                       </div>
                     </div>
                   </li>
@@ -208,312 +215,168 @@ function getImagePath($image, $isMobile = false) {
         </div>
       </nav>
     </header>
-    <section id="billboard" class="position-relative overflow-hidden">
-      <div class="swiper main-swiper">
-        <div class="swiper-wrapper">
-          <?php if (!empty($carousel_images)): ?>
-            <?php foreach ($carousel_images as $index => $image): ?>
-              <div class="swiper-slide" style="background-image: url(<?php echo htmlspecialchars(getImagePath($image)); ?>); background-size: cover; background-repeat: no-repeat; height: 100vh; background-position: center;">
-                <div class="container">
-                  <div class="row">
-                    <div class="<?php echo ($index % 2 == 0) ? 'offset-md-1 col-md-6' : 'offset-md-6 col-md-6'; ?>">
-                      <div class="banner-content">
-                        <h2><?php echo htmlspecialchars($image['title']); ?></h2>
-                        <p class="fs-3"><?php echo htmlspecialchars($image['description']); ?></p>
-                        <a href="<?php echo htmlspecialchars($image['button_url']); ?>" class="btn"><?php echo htmlspecialchars($image['button_text']); ?></a>
-                      </div>
-                    </div>
-                    <div class="col-md-5"></div>
-                  </div>
-                </div>
-              </div>
-            <?php endforeach; ?>
-          <?php else: ?>
-            <!-- Fallback content if no carousel images are available -->
-            <div class="swiper-slide" style="background-image: url(images/carousel/banner-image.jpg); background-size: cover; background-repeat: no-repeat; height: 100vh; background-position: center;">
-              <div class="container">
-                <div class="row">
-                  <div class="offset-md-1 col-md-6">
-                    <div class="banner-content">
-                      <h2>Welcome to Sakha</h2>
-                      <p class="fs-3">Your spiritual companion for prayer and worship</p>
-                      <a href="shop.html" class="btn">Shop Now</a>
-                    </div>
-                  </div>
-                  <div class="col-md-5"></div>
-                </div>
+    <section class="hero-section jarallax d-flex align-items-center justify-content-center padding-medium pb-5" style="background: url(images/hero-img.jpg) no-repeat;">
+      <div class="hero-content">
+        <div class="container">
+          <div class="row">
+            <div class="text-center padding-large no-padding-bottom">
+              <h1>Checkout</h1>
+              <div class="breadcrumbs">
+                <span class="item">
+                  <a href="index.html">Home ></a>
+                </span>
+                <span class="item">Checkout</span>
               </div>
             </div>
-          <?php endif; ?>
+          </div>
         </div>
-        <div class="main-slider-pagination position-absolute text-center"></div>
       </div>
     </section>
-    <section id="about" class="padding-xlarge">
+    <section class="shopify-cart checkout-wrap padding-large">
       <div class="container">
-        <div class="row">
-          <div class="offset-md-2 col-md-8">
-            <span class="title-accent fs-6 text-uppercase" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">About us</span>
-            <h3 class="py-3" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1500" data-aos-once="true">At Sakha, we understand the sacred importance of prayer in every Muslim's life</h3>
-            <p data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1800" data-aos-once="true">Sakha is dedicated to providing high-quality Islamic prayer essentials for the Muslim community. We specialize in beautiful sajadah (prayer mats), sacred Al-Quran collections, and blessed perfumes that enhance your spiritual journey. Our carefully curated products combine traditional craftsmanship with modern convenience, ensuring every item meets the highest standards of quality and authenticity for your daily worship needs.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section id="products" class="product-store position-relative">
-      <div class="container display-header d-flex flex-wrap justify-content-between pb-4">
-        <h3 class="mt-3">Best selling Sajadah</h3>
-        <div class="btn-right d-flex flex-wrap align-items-center">
-          <a href="shop.html" class="btn me-5">View all items</a>
-          <div class="swiper-buttons">
-            <button class="swiper-prev product-carousel-prev me-2">
-              <svg width="41" height="41"><use xlink:href="#angle-left"></use></svg>
-            </button>
-            <button class="swiper-next product-carousel-next">
-              <svg width="41" height="41"><use xlink:href="#angle-right"></use></svg>
-            </button>
-          </div>
-        </div>
-      </div>
-      <div class="swiper product-swiper">
-        <div class="swiper-wrapper">
-          <div class="swiper-slide">
-            <div class="product-card position-relative">
-              <div class="image-holder zoom-effect">
-                <img src="images/products/blossom - 1.webp" alt="Blossom Prayer Collection" class="img-fluid zoom-in">
-                <div class="cart-concern position-absolute">
-                  <div class="cart-button">
-                    <a href="#" class="btn">Add to Cart</a>
-                  </div>
+        <form class="form-group">
+          <div class="row d-flex flex-wrap">
+            <div class="col-lg-7">
+              <h3 class="pb-4">Billing Details</h3>
+              <div class="billing-details">
+                <div class="py-3">
+                  <label for="fname">First Name*</label>
+                  <input type="text" id="fname" name="firstname" class="w-100">
                 </div>
-              </div>
-              <div class="card-detail text-center pt-3 pb-2">
-                <h5 class="card-title fs-3 text-capitalize">
-                  <a href="single-product.html">Blossom Prayer Collection</a>
-                </h5>
-                <span class="item-price text-primary fs-3 fw-light">RP 100,000</span>
-              </div>
-            </div>
-          </div>
-          <div class="swiper-slide">
-            <div class="product-card position-relative">
-              <div class="image-holder zoom-effect">
-                <img src="images/products/premium - 1.webp" alt="Premium Prayer Mat" class="img-fluid zoom-in">
-                <div class="cart-concern position-absolute">
-                  <div class="cart-button">
-                    <a href="#" class="btn">Add to Cart</a>
-                  </div>
+
+                <div class="py-3">
+                  <label for="lname">Last Name*</label>
+                  <input type="text" id="lname" name="lastname" class="w-100">
                 </div>
-              </div>
-              <div class="card-detail text-center pt-3 pb-2">
-                <h5 class="card-title fs-3 text-capitalize">
-                  <a href="single-product.html">Premium Prayer Mat</a>
-                </h5>
-                <span class="item-price text-primary fs-3 fw-light">RP 125,000</span>
-              </div>
-            </div>
-          </div>
-          <div class="swiper-slide">
-            <div class="product-card position-relative">
-              <div class="image-holder zoom-effect">
-                <img src="images/products/bolossom - 2.webp" alt="Blossom Sajadah Set" class="img-fluid zoom-in">
-                <div class="cart-concern position-absolute">
-                  <div class="cart-button">
-                    <a href="#" class="btn">Add to Cart</a>
-                  </div>
+
+                <div class="py-3">
+                  <label for="address">Street Address*</label>
+                  <input type="text" id="adr" name="address" placeholder="House number and street name" class="w-100">
+                  <input type="text" id="adr2" name="address2" placeholder="Appartments, suite, etc." class="w-100">
                 </div>
-              </div>
-              <div class="card-detail text-center pt-3 pb-2">
-                <h5 class="card-title fs-3 text-capitalize">
-                  <a href="single-product.html">Blossom Sajadah Set</a>
-                </h5>
-                <span class="item-price text-primary fs-3 fw-light">RP 115,000</span>
-              </div>
-            </div>
-          </div>
-          <div class="swiper-slide">
-            <div class="product-card position-relative">
-              <div class="image-holder zoom-effect">
-                <img src="images/products/azhara - 1.webp" alt="Azhara Sacred Mat" class="img-fluid zoom-in">
-                <div class="cart-concern position-absolute">
-                  <div class="cart-button">
-                    <a href="#" class="btn">Add to Cart</a>
-                  </div>
+
+                <div class="py-3">
+                  <label for="map-search">Search Address on Map</label>
+                  <input type="text" id="map-search" placeholder="Search for your address in Indonesia..." class="w-100 mb-3">
+                  <div id="map" style="height: 300px; width: 100%; border: 1px solid #ddd; border-radius: 5px; background-color: #f8f9fa;"></div>
+                  <small class="text-muted">Click on the map to select your address. You can also drag the marker to fine-tune your location.</small>
                 </div>
-              </div>
-              <div class="card-detail text-center pt-3 pb-2">
-                <h5 class="card-title fs-3 text-capitalize">
-                  <a href="single-product.html">Azhara Sacred Mat</a>
-                </h5>
-                <span class="item-price text-primary fs-3 fw-light">RP 135,000</span>
-              </div>
-            </div>
-          </div>
-          <div class="swiper-slide">
-            <div class="product-card position-relative">
-              <div class="image-holder zoom-effect">
-                <img src="images/products/premium - 2.webp" alt="product-item" class="img-fluid zoom-in">
-                <div class="cart-concern position-absolute">
-                  <div class="cart-button">
-                    <a href="#" class="btn">Add to Cart</a>
-                  </div>
+
+                <div class="py-3">
+                  <label for="city">City *</label>
+                  <input type="text" id="city" name="city" class="w-100">
                 </div>
-              </div>
-              <div class="card-detail text-center pt-3 pb-2">
-                <h5 class="card-title fs-3 text-capitalize">
-                  <a href="single-product.html">Matt Black</a>
-                </h5>
-                <span class="item-price text-primary fs-3 fw-light">RP 150,000</span>
-              </div>
-            </div>
-          </div>
-          <div class="swiper-slide">
-            <div class="product-card position-relative">
-              <div class="image-holder zoom-effect">
-                <img src="images/products/premium - 1.webp" alt="Premium Prayer Mat" class="img-fluid zoom-in">
-                <div class="cart-concern position-absolute">
-                  <div class="cart-button">
-                    <a href="#" class="btn">Add to Cart</a>
-                  </div>
+
+                <div class="py-3">
+                  <label for="state">Province *</label>
+                  <select class="w-100" aria-label="Default select example">
+                    <option selected="" hidden="">DKI Jakarta</option>
+                    <option value="1">West Java</option>
+                    <option value="2">Central Java</option>
+                    <option value="3">East Java</option>
+                    <option value="4">Bali</option>
+                    <option value="5">North Sumatra</option>
+                    <option value="6">South Sumatra</option>
+                    <option value="7">West Sumatra</option>
+                    <option value="8">Yogyakarta</option>
+                    <option value="9">South Sulawesi</option>
+                    <option value="10">North Sulawesi</option>
+                  </select>
                 </div>
-              </div>
-              <div class="card-detail text-center pt-3 pb-2">
-                <h5 class="card-title fs-3 text-capitalize">
-                  <a href="single-product.html">Premium Prayer Mat</a>
-                </h5>
-                <span class="item-price text-primary fs-3 fw-light">RP 125,000</span>
-              </div>
-            </div>
-          </div>
-          <div class="swiper-slide">
-            <div class="product-card position-relative">
-              <div class="image-holder zoom-effect">
-                <img src="images/products/blossom - 1.webp" alt="Blossom Prayer Collection" class="img-fluid zoom-in">
-                <div class="cart-concern position-absolute">
-                  <div class="cart-button">
-                    <a href="#" class="btn">Add to Cart</a>
-                  </div>
+
+                <div class="py-3">
+                  <label for="zip">Postal Code *</label>
+                  <input type="text" id="zip" name="zip" class="w-100" placeholder="e.g. 12345">
                 </div>
-              </div>
-              <div class="card-detail text-center pt-3 pb-2">
-                <h5 class="card-title fs-3 text-capitalize">
-                  <a href="single-product.html">Blossom Prayer Collection</a>
-                </h5>
-                <span class="item-price text-primary fs-3 fw-light">RP 100,000</span>
-              </div>
-            </div>
-          </div>
-          <div class="swiper-slide">
-            <div class="product-card position-relative">
-              <div class="image-holder zoom-effect">
-                <img src="images/products/bolossom - 2.webp" alt="Blossom Sajadah Set" class="img-fluid zoom-in">
-                <div class="cart-concern position-absolute">
-                  <div class="cart-button">
-                    <a href="#" class="btn">Add to Cart</a>
-                  </div>
+
+                <div class="py-3">
+                  <label for="email">Phone *</label>
+                  <input type="text" id="phone" name="phone" class="w-100">
                 </div>
-              </div>
-              <div class="card-detail text-center pt-3 pb-2">
-                <h5 class="card-title fs-3 text-capitalize">
-                  <a href="single-product.html">Blossom Sajadah Set</a>
-                </h5>
-                <span class="item-price text-primary fs-3 fw-light">RP 115,000</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-    <section id="testimonials" class="position-relative padding-xlarge">
-      <div class="container">
-        <div class="row">
-          <div class="offset-md-2 col-md-8">
-            <h3 class="text-center mb-5" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">What our customers says</h3>
-            <div class="review-content position-relative" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1500" data-aos-once="true">
-              <div class="swiper testimonial-swiper">
-                <div class="swiper-wrapper">
-                  <div class="swiper-slide text-center d-flex justify-content-center">
-                    <div class="review-item">
-                      <blockquote class="fs-1 fw-light">“I've been using this sajadah for over 6 months now, and it's exceeded my expectations. The quality is outstanding - the fabric feels soft yet durable, and the beautiful Islamic geometric pattern helps me focus during prayer."
-                        ”</blockquote>
-                      <div class="author-detail">
-                        <div class="name fw-bold text-uppercase pt-2">Christoper Phrase</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="swiper-slide text-center d-flex justify-content-center">
-                    <div class="review-item">
-                      <blockquote class="fs-1 fw-light">“I've been using this sajadah for over 6 months now, and it's exceeded my expectations. The quality is outstanding - the fabric feels soft yet durable, and the beautiful Islamic geometric pattern helps me focus during prayer.</blockquote>
-                      <div class="author-detail">
-                        <div class="name fw-bold text-uppercase pt-2">Christoper Phrase</div>
-                      </div>
-                    </div>
-                  </div>
                 
+                <div class="py-3">
+                  <label for="email">Email address *</label>
+                  <input type="text" id="email" name="email" class="w-100">
                 </div>
               </div>
             </div>
-            <div class="swiper-buttons text-center mt-5" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1800" data-aos-once="true">
-              <button class="swiper-prev testimonial-arrow-prev me-2">
-                <svg width="41" height="41"><use xlink:href="#arrow-left"></use></svg>
-              </button>
-              <span>|</span>
-              <button class="swiper-next testimonial-arrow-next ms-2">
-                <svg width="41" height="41"><use xlink:href="#arrow-right"></use></svg>
-              </button>
+            <div class="col-lg-5">
+              <h3 class="pb-4">Additional Information</h3>
+              <div class="billing-details">
+                <label for="fname">Order notes (optional)</label>
+                <textarea class="w-100" placeholder="Notes about your order. Like special notes for delivery."></textarea>
+              </div>
+              <div class="your-order mt-5">
+                <h3 class="pb-4">Cart Totals</h3>
+                <div class="total-price">
+                  <table cellspacing="0" class="table">
+                    <tbody>
+                      <tr class="subtotal border-top border-bottom border-dark pt-2 pb-2 text-uppercase">
+                        <th>Subtotal</th>
+                        <td data-title="Subtotal">
+                          <span class="price-amount amount text-primary ps-5">
+                            <bdi>
+                              <span class="price-currency-symbol">$</span>2,370.00 </bdi>
+                          </span>
+                        </td>
+                      </tr>
+                      <tr class="order-total border-bottom border-dark pt-2 pb-2 text-uppercase">
+                        <th>Total</th>
+                        <td data-title="Total">
+                          <span class="price-amount amount text-primary ps-5">
+                            <bdi>
+                              <span class="price-currency-symbol">$</span>2,370.00 </bdi>
+                          </span>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                  <div class="list-group mt-5 mb-3">
+                    <label class="list-group-item p-0 bg-transparent d-flex gap-2 border-0">
+                      <input class="form-check-input p-0 flex-shrink-0" type="radio" name="listGroupRadios" id="listGroupRadios1" value="" checked>
+                      <span>
+                        <div class="fw-300 text-uppercase d-flex align-items-center gap-2">
+                          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/QRIS_logo.svg/2560px-QRIS_logo.svg.png" alt="QRIS" style="height: 24px; width: auto;">
+                        </div>
+                        <!-- <p class="d-block">Pay using QRIS (Quick Response Code Indonesian Standard). Simply scan the QR code with your mobile banking app or e-wallet to complete the payment instantly.</p> -->
+                      </span>
+                    </label>
+
+                  </div>
+                  <button type="submit" name="submit" class="btn btn-dark w-100">Place an order</button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </form>
       </div>
     </section>
-    <section id="our-video">
-      <div class="video-section jarallax d-flex align-items-center justify-content-center" style="background: url(images/products/new-arrival.webp) no-repeat; background-size: cover; background-position: center;">
-        <div class="video-player text-center">
-          <a type="button" data-bs-toggle="modal" data-src="https://www.youtube.com/embed/W_tIumKa8VY" data-bs-target="#myModal" class="play-btn position-relative">
-            <svg class="position-absolute top-0 bottom-0 start-0 end-0 m-auto" width="41" height="41"><use xlink:href="#play"></use></svg>
-            <img src="images/text-pattern.png" alt="pattern" class="text-pattern">
-          </a>
-        </div>
-      </div>
-    </section>
-    <section id="faqs" class="padding-xlarge">
+    <section id="newsletter" class="bg-light padding-medium" style="background-image: url(images/hero-img.jpg);">
       <div class="container">
-        <div class="row">
-          <div class="offset-md-2 col-md-8">
-            <h3 class="text-center mb-5" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">Popular Categories</h3>
-             
-          </div>
-        </div>
-      </div>
-    </section>    
-    <section id="banner" data-aos="fade" data-aos-once="true">
-      <div class="banner-content-1 position-relative" style="background:url('images/products/premium\ -\ 1.webp') no-repeat left; background-size: cover; height: 100%;">
-        <div class="banner-content-text position-absolute" data-aos="fade" data-aos-delay="1000" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">
-          <h2>Sajadah</h2>
-          <a href="shop.html" class="btn">Explore Products</a>
-        </div>
-      </div>
-      <div class="banner-content-2 position-relative" style="background:url('images/products/bolossom\ -\ 2.webp') no-repeat left; background-size: cover; height: 100%;">
-        <div class="banner-content-text position-absolute" data-aos="fade" data-aos-delay="1000" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">
-          <h2>Perfume</h2>
-          <a href="shop.html" class="btn">Explore Products</a>
-        </div>
-      </div>
-      <div class="banner-content-3 position-relative" style="background:url('images/products/blossom\ -\ 1.webp') no-repeat left; background-size: cover; height: 100%;">
-        <div class="banner-content-text position-absolute" data-aos="fade" data-aos-delay="1000" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">
-          <h2>Books</h2>
-          <a href="shop.html" class="btn">Explore Products</a>
+        <div class="newsletter">
+          <div class="row">
+            <div class="col-lg-6 col-md-12 title mb-4">
+              <h2>Subscribe to Our Newsletter</h2>
+              <p>Get latest news, updates and deals directly mailed to your inbox</p> 				
+            </div>
+            <form class="col-lg-6 col-md-12 d-flex align-items-center">
+              <div class="d-flex w-75 border-bottom border-dark py-2">
+                <input id="newsletter1" type="text" class="form-control border-0 p-0" placeholder="Your email address here">
+                <button class="btn border-0 p-0" type="button">Subscribe</button>
+              </div>
+            </form>
+          </div> 			
         </div>
       </div>
     </section>
-    <!-- <footer id="footer" class="overflow-hidden padding-xlarge pb-0">
+    <footer id="footer" class="overflow-hidden padding-xlarge pb-0">
       <div class="container">
         <div class="row">
           <div class="footer-top-area pb-5">
             <div class="row d-flex flex-wrap justify-content-between">
               <div class="col-lg-3 col-sm-6 pb-3" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">
                 <div class="footer-menu">
-                  <img src="images/sakha-logo-text.png" alt="logo" class="mb-2">
+                  <img src="images/main-logo.png" alt="logo" class="mb-2">
                   <p>Nunc tristique facilisis consectetur vivamus ut porta porta aliquam vitae vehicula leo nullam urna lectus.</p>
                 </div>
               </div>
@@ -531,7 +394,7 @@ function getImagePath($image, $isMobile = false) {
                       <a href="contact.html">Contact</a>
                     </li>
                     <li class="menu-item pb-2">
-                      <a href="login.html">Account</a>
+                      <a href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Account</a>
                     </li>
                   </ul>
                 </div>
@@ -602,8 +465,8 @@ function getImagePath($image, $isMobile = false) {
         </div>
         <hr>
       </div>
-    </footer> -->
-    <!-- <div id="footer-bottom">
+    </footer>
+    <div id="footer-bottom">
       <div class="container">
         <div class="row d-flex flex-wrap justify-content-between">
           <div class="col-12">
@@ -613,25 +476,8 @@ function getImagePath($image, $isMobile = false) {
           </div>
         </div>
       </div>
-    </div> -->
-    
-    <!-- Video Popup -->
-    <div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-      <div class="modal-dialog" role="document">
-
-          <div class="modal-content">
-            
-              <div class="modal-body">
-                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"><svg class="bi" width="40" height="40"><use xlink:href="#close-sharp"></use></svg></button>
-                  <div class="ratio ratio-16x9">
-                    <iframe class="embed-responsive-item" src="" id="video"  allowscriptaccess="always" allow="autoplay"></iframe>
-                  </div>
-              </div>
-
-          </div>
-
-      </div>
     </div>
+    
     <!-- Login Modal -->
     <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-dialog-centered">
@@ -699,7 +545,195 @@ function getImagePath($image, $isMobile = false) {
     <script type="text/javascript" src="js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="js/plugins.js"></script>
     <script type="text/javascript" src="js/script.js"></script>
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAef_gZXRvK3y4TP666us0NglEXRqcXKmM&libraries=places&callback=initMap" async defer></script>
     <script>
+        let map;
+        let marker;
+        let geocoder;
+        let autocomplete;
+
+        function initMap() {
+            // Initialize map centered on Jakarta, Indonesia
+            map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 11,
+                center: {lat: -6.2088, lng: 106.8456}
+            });
+
+            // Initialize geocoder
+            geocoder = new google.maps.Geocoder();
+
+            // Initialize autocomplete on search input
+            autocomplete = new google.maps.places.Autocomplete(
+                document.getElementById('map-search'),
+                {
+                    types: ['address'],
+                    componentRestrictions: {country: 'id'},
+                    bounds: {
+                        north: 6.0,
+                        south: -11.0,
+                        east: 141.0,
+                        west: 95.0
+                    }
+                }
+            );
+
+            // Set up autocomplete listener
+            autocomplete.addListener('place_changed', onPlaceChanged);
+
+            // Set up map click listener
+            map.addListener('click', function(event) {
+                placeMarkerAndPanTo(event.latLng);
+            });
+
+            // Try to get user's current location
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function(position) {
+                    const userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    map.setCenter(userLocation);
+                }, function() {
+                    // Handle location error
+                    console.log('Error: The Geolocation service failed.');
+                });
+            }
+        }
+
+        function onPlaceChanged() {
+            const place = autocomplete.getPlace();
+            
+            if (!place.geometry) {
+                console.log("No details available for input: '" + place.name + "'");
+                return;
+            }
+
+            // If the place has a geometry, center the map on it
+            if (place.geometry.viewport) {
+                map.fitBounds(place.geometry.viewport);
+            } else {
+                map.setCenter(place.geometry.location);
+                map.setZoom(17);
+            }
+
+            // Place marker
+            if (marker) {
+                marker.setMap(null);
+            }
+            marker = new google.maps.Marker({
+                position: place.geometry.location,
+                map: map,
+                draggable: true
+            });
+
+            // Make marker draggable and update address on drag
+            marker.addListener('dragend', function() {
+                updateAddressFromLatLng(marker.getPosition());
+            });
+
+            // Update form fields
+            updateFormFields(place);
+        }
+
+        function placeMarkerAndPanTo(latLng) {
+            // Remove existing marker
+            if (marker) {
+                marker.setMap(null);
+            }
+
+            // Add new marker
+            marker = new google.maps.Marker({
+                position: latLng,
+                map: map,
+                draggable: true
+            });
+
+            // Make marker draggable
+            marker.addListener('dragend', function() {
+                updateAddressFromLatLng(marker.getPosition());
+            });
+
+            // Update address based on clicked location
+            updateAddressFromLatLng(latLng);
+        }
+
+        function updateAddressFromLatLng(latLng) {
+            geocoder.geocode({location: latLng}, function(results, status) {
+                if (status === 'OK') {
+                    if (results[0]) {
+                        const place = results[0];
+                        updateFormFields(place);
+                        document.getElementById('map-search').value = place.formatted_address;
+                    } else {
+                        console.log('No results found');
+                    }
+                } else {
+                    console.log('Geocoder failed due to: ' + status);
+                }
+            });
+        }
+
+        function updateFormFields(place) {
+            // Clear existing values
+            document.getElementById('adr').value = '';
+            document.getElementById('city').value = '';
+            document.getElementById('zip').value = '';
+
+            let streetNumber = '';
+            let streetName = '';
+
+            // Parse address components
+            if (place.address_components) {
+                place.address_components.forEach(function(component) {
+                    const types = component.types;
+                    
+                    if (types.includes('street_number')) {
+                        streetNumber = component.long_name;
+                    }
+                    
+                    if (types.includes('route')) {
+                        streetName = component.long_name;
+                    }
+                    
+                    if (types.includes('locality')) {
+                        document.getElementById('city').value = component.long_name;
+                    }
+                    
+                    if (types.includes('postal_code')) {
+                        document.getElementById('zip').value = component.long_name;
+                    }
+                    
+                    if (types.includes('administrative_area_level_1')) {
+                        // Update province dropdown if needed
+                        const stateSelects = document.querySelectorAll('select[aria-label="Default select example"]');
+                        const provinceSelect = stateSelects[1]; // Second dropdown is the province dropdown
+                        const provinceName = component.long_name;
+                        
+                        if (provinceSelect) {
+                            // Try to find matching option in dropdown
+                            for (let option of provinceSelect.options) {
+                                if (option.text.toLowerCase().includes(provinceName.toLowerCase()) || 
+                                    option.text.toLowerCase().includes(component.short_name.toLowerCase())) {
+                                    option.selected = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Combine street number and name
+            if (streetNumber && streetName) {
+                document.getElementById('adr').value = streetNumber + ' ' + streetName;
+            } else if (streetName) {
+                document.getElementById('adr').value = streetName;
+            } else if (place.formatted_address) {
+                // Fallback to formatted address
+                document.getElementById('adr').value = place.formatted_address;
+            }
+        }
+
         // Social Login Functions
         function loginWithGoogle() {
             // Here you would integrate with Google Sign-In API
