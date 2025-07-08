@@ -1,22 +1,18 @@
 - Understanding current BAU
     - Order Process
-    - Stock
-    - 
+    - Stock Management
+    - Team
 
 
 
-Pages
-User Facing
-- Navigations:
-    - Homepage
-    - Products
-    - Cart
-    - User
-
-- Home
+Web Pages
+User Facing:
+- Homepage
     - Slides
         Image
         Text
+        Button
+    - Small "About Us" Section 
     - Popular Products
     - Video Teaser
     - Popular Categories (3 Products)
@@ -27,7 +23,7 @@ User Facing
         Categories
         Price
 - Product Detail
-    - Image
+    - Images
     - Name
     - Description
     - Price
@@ -35,6 +31,7 @@ User Facing
         - Color
         - Size
         - Stock?
+        - Different Pricing??
 
 - User
     - Login Page
@@ -58,6 +55,11 @@ User Facing
         - Courier List? JNE, JNT
     - Place Order
 
+- Navigations:
+    - Homepage
+    - Products
+    - Cart
+    - User
 
 
 Admin Facing:
