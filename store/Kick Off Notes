@@ -1,7 +1,13 @@
 - Understanding current BAU
     - Order Process
+        - Ada Custom Nama
+        - Tanpa Nama, Stock always Available 
     - Stock Management
+        Always available
     - Team
+        - Admin
+        - Packing
+        - Pengiriman
 
 
 
@@ -13,15 +19,21 @@ User Facing:
         Text
         Button
     - Small "About Us" Section 
-    - Popular Products
+    - Best Selling
+        - slider button pindah ke tengah product sisi kiri n kanan
     - Video Teaser
     - Popular Categories (3 Products)
+    - Footer
+        - Instagram
+        - Tiktok
+        - Whatsapp
 
 - Products
     - List of Product
     - Filter Panel
         Categories
         Price
+
 - Product Detail
     - Images
     - Name
@@ -30,8 +42,9 @@ User Facing:
     - Variants
         - Color
         - Size
-        - Stock?
-        - Different Pricing??
+        - Custom Nama - Sajadah
+        - Custom Nama - Pouch
+        - Different Pricing - Based on Size
 
 - User
     - Login Page
@@ -51,15 +64,22 @@ User Facing:
     - Shipping Address
     - Payment Method (Only QRIS)
     - Shipping Fee?
-        - Integrate with 3rd party for the estimation?
-        - Courier List? JNE, JNT
+        - Integrate with 3rd party for the estimation? 
+            - 3rd Party : 200.000
+        - Courier List?
+            - JNE
+            - JNT
     - Place Order
+        - 3rd Party: Xendit 
+            - 0.3% Total Amount
 
-- Navigations:
+- Navigations (Burger button) Follow https://lookboutiquestore.com/
     - Homepage
     - Products
     - Cart
     - User
+
+- Add section to handle bulk order 
 
 
 Admin Facing:
@@ -80,8 +100,9 @@ Admin Facing:
     - Hide
 
 - Orders
-    - Confirmed
-    - Sent
+    - Terbayar
+    - Terkonfirmasi
+    - Terkirim
 - Users
     - Email
     - Phone Number
@@ -102,20 +123,16 @@ Buyer Experience:
 
 Admin Experience
 - Get Notified of new orders via email
-- View 'Orders' Page for 'Confirmed Order'
-- Update order status as 'Sent'
+- View 'Orders' Page for. Update status ke 'Terkonfirmasi'
+- Update order status as 'Terkirim'
 
 
 Out of Scopes:
 - Payment Method other than QRIS
-- Shipping Fee Calculation
 - Chat, Comment & Review
 - Wishlist
 - Multi Languages
-- 
-
-
-
+    - English
 
 Documents / items to prepare:
     - Logo Black Color Word with PNG Image
@@ -126,3 +143,5 @@ Documents / items to prepare:
     - SK Menkeh dari Akta Pendirian Perushaan
     - Foto KTP Direktur
     - Foto2 Products
+
+https://sakha.com
