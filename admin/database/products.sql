@@ -47,11 +47,14 @@ CREATE TABLE products (
     custom_name_enabled BOOLEAN DEFAULT FALSE,
     pouch_custom_price DECIMAL(10,2) DEFAULT 5000.00,
     sajadah_custom_price DECIMAL(10,2) DEFAULT 5000.00,
-    status ENUM('active', 'inactive') DEFAULT 'active',
+    status ENUM('active', 'inactive','deleted') DEFAULT 'active',
     featured BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
+
+-- Optional: Add index for better performance when filtering deleted products
+CREATE INDEX idx_products_status_deleted ON products(status, id);
 
 -- Product Categories (Many-to-Many relationship)
 CREATE TABLE product_categories (
@@ -70,7 +73,7 @@ CREATE TABLE product_colors (
     product_id INT NOT NULL,
     color_name VARCHAR(100) NOT NULL,
     color_code VARCHAR(7) NOT NULL, -- RGB hex code (#FFFFFF)
-    status ENUM('active', 'inactive') DEFAULT 'active',
+    status ENUM('active', 'inactive','deleted') DEFAULT 'active',
     sort_order INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -83,7 +86,7 @@ CREATE TABLE product_sizes (
     product_id INT NOT NULL,
     size_name VARCHAR(50) NOT NULL,
     size_value VARCHAR(10) NOT NULL, -- S, M, L, XL, etc.
-    status ENUM('active', 'inactive') DEFAULT 'active',
+    status ENUM('active', 'inactive','deleted') DEFAULT 'active',
     sort_order INT DEFAULT 0,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE
@@ -98,7 +101,7 @@ CREATE TABLE product_images (
     alt_text VARCHAR(255),
     is_primary BOOLEAN DEFAULT FALSE,
     sort_order INT DEFAULT 0,
-    status ENUM('active', 'inactive') DEFAULT 'active',
+    status ENUM('active', 'inactive','deleted') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
     FOREIGN KEY (color_id) REFERENCES product_colors(id) ON DELETE CASCADE

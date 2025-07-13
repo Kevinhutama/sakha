@@ -8,7 +8,7 @@ $page_title = "Product Management - MaterialM Admin";
 $database = new Database();
 $db = $database->getConnection();
 
-// Get all products with their categories and colors
+// Get all products with their categories and colors (excluding deleted products)
 $query = "SELECT p.*, 
                  GROUP_CONCAT(DISTINCT c.name ORDER BY c.name SEPARATOR ', ') as categories,
                  GROUP_CONCAT(DISTINCT CONCAT(pc.color_name, ':', pc.color_code) ORDER BY pc.sort_order SEPARATOR ', ') as colors,
@@ -18,6 +18,7 @@ $query = "SELECT p.*,
           LEFT JOIN categories c ON pc_rel.category_id = c.id
           LEFT JOIN product_colors pc ON p.id = pc.product_id AND pc.status = 'active'
           LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
+          WHERE p.status != 'deleted'
           GROUP BY p.id
           ORDER BY p.created_at DESC";
 
@@ -120,6 +121,26 @@ ob_start();
 .category-badges .badge {
     margin: 1px;
     font-size: 0.7em;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.action-buttons .btn {
+    padding: 4px 8px;
+    font-size: 14px;
+}
+
+.action-buttons .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
 }
 
 
@@ -251,6 +272,8 @@ ob_start();
                 <td>
                     <?php if ($product['status'] == 'active'): ?>
                         <span class="badge bg-success">Active</span>
+                    <?php elseif ($product['status'] == 'deleted'): ?>
+                        <span class="badge bg-dark">Deleted</span>
                     <?php else: ?>
                         <span class="badge bg-danger">Inactive</span>
                     <?php endif; ?>
@@ -260,7 +283,7 @@ ob_start();
                         <button class="btn btn-sm btn-outline-primary" type="button" title="Edit Product">
                             <iconify-icon icon="solar:pen-bold"></iconify-icon>
                         </button>
-                        <button class="btn btn-sm btn-outline-danger" type="button" title="Delete Product">
+                        <button class="btn btn-sm btn-outline-danger" type="button" title="Delete Product" onclick="deleteProduct(<?php echo $product['id']; ?>, '<?php echo htmlspecialchars($product['name'], ENT_QUOTES); ?>')">
                             <iconify-icon icon="solar:trash-bin-trash-bold"></iconify-icon>
                         </button>
                     </div>
@@ -317,6 +340,95 @@ document.getElementById('searchInput').addEventListener('input', function() {
     }
 });
 
+// Delete product function
+function deleteProduct(productId, productName) {
+    if (confirm('Are you sure you want to delete the product "' + productName + '"?\n\nThis action cannot be undone.')) {
+        // Show loading state
+        const deleteButton = event.target.closest('button');
+        const originalContent = deleteButton.innerHTML;
+        deleteButton.innerHTML = '<div class="spinner-border spinner-border-sm" role="status"></div>';
+        deleteButton.disabled = true;
+        
+        // Send AJAX request to delete handler
+        fetch('delete-product-handler.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'product_id=' + productId
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Remove the row from table with animation
+                const row = deleteButton.closest('tr');
+                row.style.transition = 'opacity 0.3s ease';
+                row.style.opacity = '0';
+                
+                setTimeout(() => {
+                    row.remove();
+                    
+                    // Update product count
+                    const productCount = document.getElementById('productCount');
+                    const currentCount = parseInt(productCount.textContent);
+                    productCount.textContent = currentCount - 1;
+                    
+                    // Show success message
+                    showMessage('success', data.message);
+                    
+                    // Check if no products left
+                    const remainingRows = document.querySelectorAll('.product-row');
+                    if (remainingRows.length === 0) {
+                        document.getElementById('noResults').style.display = 'block';
+                    }
+                }, 300);
+            } else {
+                // Show error message
+                showMessage('error', data.message);
+                
+                // Restore button state
+                deleteButton.innerHTML = originalContent;
+                deleteButton.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('error', 'An error occurred while deleting the product');
+            
+            // Restore button state
+            deleteButton.innerHTML = originalContent;
+            deleteButton.disabled = false;
+        });
+    }
+}
+
+// Function to show success/error messages
+function showMessage(type, message) {
+    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+    const iconClass = type === 'success' ? 'solar:check-circle-bold' : 'solar:danger-circle-bold';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            <iconify-icon icon="${iconClass}" class="me-2"></iconify-icon>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    `;
+    
+    // Insert at the top of the page
+    const container = document.querySelector('.container-fluid');
+    const pageHeader = container.querySelector('.d-flex.justify-content-between.align-items-center.mb-4');
+    pageHeader.insertAdjacentHTML('afterend', alertHtml);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(() => {
+        const alert = container.querySelector('.alert');
+        if (alert) {
+            alert.remove();
+        }
+    }, 5000);
+}
+
 // Add button click handlers (without implementation)
 document.addEventListener('DOMContentLoaded', function() {
     
@@ -324,13 +436,6 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.btn-outline-primary').forEach(btn => {
         btn.addEventListener('click', function() {
             alert('Edit Product functionality will be implemented here');
-        });
-    });
-    
-    // Delete buttons
-    document.querySelectorAll('.btn-outline-danger').forEach(btn => {
-        btn.addEventListener('click', function() {
-            alert('Delete Product functionality will be implemented here');
         });
     });
 });
