@@ -109,19 +109,11 @@ function getImagePath($image, $isMobile = false) {
         </div>
       </div>
     </section>
-    <section id="products" class="product-store position-relative">
+    <section id="products" class="product-store position-relative" style="margin-bottom:100px;">
       <div class="container display-header d-flex flex-wrap justify-content-between pb-4">
         <h3 class="mt-3">Best selling Sajadah</h3>
         <div class="btn-right d-flex flex-wrap align-items-center">
-          <a href="shop.html" class="btn me-5">View all items</a>
-          <div class="swiper-buttons">
-            <button class="swiper-prev product-carousel-prev me-2">
-              <svg width="41" height="41"><use xlink:href="#angle-left"></use></svg>
-            </button>
-            <button class="swiper-next product-carousel-next">
-              <svg width="41" height="41"><use xlink:href="#angle-right"></use></svg>
-            </button>
-          </div>
+          <!-- <a href="shop.html" class="btn me-5">View all items</a> -->
         </div>
       </div>
       <div class="swiper product-swiper">
@@ -272,48 +264,13 @@ function getImagePath($image, $isMobile = false) {
           </div>
         </div>
       </div>
-    </section>
-    <section id="testimonials" class="position-relative padding-xlarge">
-      <div class="container">
-        <div class="row">
-          <div class="offset-md-2 col-md-8">
-            <h3 class="text-center mb-5" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">What our customers says</h3>
-            <div class="review-content position-relative" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1500" data-aos-once="true">
-              <div class="swiper testimonial-swiper">
-                <div class="swiper-wrapper">
-                  <div class="swiper-slide text-center d-flex justify-content-center">
-                    <div class="review-item">
-                      <blockquote class="fs-1 fw-light">“I've been using this sajadah for over 6 months now, and it's exceeded my expectations. The quality is outstanding - the fabric feels soft yet durable, and the beautiful Islamic geometric pattern helps me focus during prayer."
-                        ”</blockquote>
-                      <div class="author-detail">
-                        <div class="name fw-bold text-uppercase pt-2">Christoper Phrase</div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="swiper-slide text-center d-flex justify-content-center">
-                    <div class="review-item">
-                      <blockquote class="fs-1 fw-light">“I've been using this sajadah for over 6 months now, and it's exceeded my expectations. The quality is outstanding - the fabric feels soft yet durable, and the beautiful Islamic geometric pattern helps me focus during prayer.</blockquote>
-                      <div class="author-detail">
-                        <div class="name fw-bold text-uppercase pt-2">Christoper Phrase</div>
-                      </div>
-                    </div>
-                  </div>
-                
-                </div>
-              </div>
-            </div>
-            <div class="swiper-buttons text-center mt-5" data-aos="fade" data-aos-easing="ease-in" data-aos-duration="1800" data-aos-once="true">
-              <button class="swiper-prev testimonial-arrow-prev me-2">
-                <svg width="41" height="41"><use xlink:href="#arrow-left"></use></svg>
-              </button>
-              <span>|</span>
-              <button class="swiper-next testimonial-arrow-next ms-2">
-                <svg width="41" height="41"><use xlink:href="#arrow-right"></use></svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <!-- Navigation buttons positioned over the swiper -->
+      <button class="swiper-prev product-carousel-prev" style="position: absolute; top: 50%; left: 20px; transform: translateY(-50%); z-index: 10; background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255, 255, 255, 1)'; this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.transform='translateY(-50%) scale(1)'">
+        <svg width="24" height="24"><use xlink:href="#angle-left"></use></svg>
+      </button>
+      <button class="swiper-next product-carousel-next" style="position: absolute; top: 50%; right: 20px; transform: translateY(-50%); z-index: 10; background: rgba(255, 255, 255, 0.9); border: none; border-radius: 50%; width: 50px; height: 50px; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.2); cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(255, 255, 255, 1)'; this.style.transform='translateY(-50%) scale(1.1)'" onmouseout="this.style.background='rgba(255, 255, 255, 0.9)'; this.style.transform='translateY(-50%) scale(1)'">
+        <svg width="24" height="24"><use xlink:href="#angle-right"></use></svg>
+      </button>
     </section>
     <section id="our-video">
       <div class="video-section jarallax d-flex align-items-center justify-content-center" style="background: url(images/products/new-arrival.webp) no-repeat; background-size: cover; background-position: center;">
