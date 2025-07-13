@@ -21,6 +21,60 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Mulish:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;0,1000;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900;1,1000&display=swap" rel="stylesheet">
+    
+    <!-- Product Image Hover Effect -->
+    <style>
+      .product-card .image-holder {
+        position: relative;
+        overflow: hidden;
+      }
+      
+      .product-card .primary-image {
+        display: block;
+        width: 100%;
+        transition: opacity 0.6s ease-in-out;
+      }
+      
+      .product-card .secondary-image {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        opacity: 0;
+        transition: opacity 0.6s ease-in-out;
+      }
+      
+      .product-card .image-holder::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.08);
+        opacity: 0;
+        transition: opacity 0.6s ease-in-out;
+        pointer-events: none;
+        z-index: 3;
+      }
+      
+      .product-card .image-holder:hover .primary-image {
+        opacity: 0;
+      }
+      
+      .product-card .image-holder:hover .secondary-image {
+        opacity: 0.8;
+        transition: opacity 0s;
+      }
+      
+      .product-card .image-holder:hover::after {
+        opacity: 1;
+        transition: opacity 0s;
+      }
+    </style>
+    
     <!-- script
     ================================================== -->
     <script src="js/modernizr.js"></script>
@@ -76,8 +130,9 @@
             <div class="row product-content product-store">
               <div class="col-lg-4 col-md-6">
                 <div class="product-card mb-3 position-relative">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/products/blossom - 1.webp" alt="Blossom Prayer Collection" class="img-fluid zoom-in">
+                  <div class="image-holder">
+                    <img src="images/products/blossom - 1.webp" alt="Blossom Prayer Collection" class="img-fluid primary-image">
+                    <img src="images/products/bolossom - 2.webp" alt="Blossom Prayer Collection Secondary" class="img-fluid secondary-image">
                     <div class="cart-concern position-absolute">
                       <div class="cart-button">
                         <a href="#" class="btn">Add to Cart</a>
