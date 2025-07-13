@@ -151,25 +151,63 @@ try {
 ob_start();
 ?>
 
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between align-items-center">
-                    <h4 class="card-title mb-0">Carousel Images Management</h4>
-                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCarouselModal">
-                        <i class="ti ti-plus"></i> Add New Carousel Image
-                    </button>
-                </div>
-                <div class="card-body">
-                    <?php if (isset($error_message)): ?>
-                        <div class="alert alert-danger" role="alert">
-                            <?php echo htmlspecialchars($error_message); ?>
-                        </div>
-                    <?php endif; ?>
-                    
-                    <div class="table-responsive">
-                        <table class="table table-striped">
+<style>
+/* Override container-fluid max-width */
+.container-fluid {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+.carousel-image-preview {
+    width: 60px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.table-responsive {
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.action-buttons .btn {
+    padding: 4px 8px;
+    margin: 0 2px;
+}
+</style>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-semibold mb-1">
+            <iconify-icon icon="solar:widget-5-bold" class="me-2"></iconify-icon>
+            Carousel Images Management
+        </h4>
+        <p class="text-muted mb-0">Manage carousel images for your website</p>
+    </div>
+    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCarouselModal">
+        <iconify-icon icon="solar:add-circle-bold" class="me-2"></iconify-icon>
+        Add New Carousel Image
+    </button>
+</div>
+
+<?php if (isset($error_message)): ?>
+    <div class="alert alert-danger mb-4" role="alert">
+        <iconify-icon icon="solar:danger-circle-bold" class="me-2"></iconify-icon>
+        <?php echo htmlspecialchars($error_message); ?>
+    </div>
+<?php endif; ?>
+
+<!-- Carousel Images Table -->
+<div class="table-responsive bg-white rounded-3 border">
+                        <table class="table table-striped table-hover mb-0">
                             <thead>
                                 <tr>
                                     <th>Order</th>
@@ -188,10 +226,9 @@ ob_start();
                                                 <span class="badge bg-secondary"><?php echo $image['display_order']; ?></span>
                                             </td>
                                             <td>
-                                                <img src="../store/<?php echo htmlspecialchars($image['web_image_path']); ?>" 
-                                                     alt="<?php echo htmlspecialchars($image['title']); ?>" 
-                                                     class="img-thumbnail" 
-                                                     style="width: 100px; height: 60px; object-fit: cover;">
+                                                                                <img src="../store/<?php echo htmlspecialchars($image['web_image_path']); ?>" 
+                                     alt="<?php echo htmlspecialchars($image['title']); ?>" 
+                                     class="carousel-image-preview">
                                             </td>
                                             <td>
                                                 <strong><?php echo htmlspecialchars($image['title']); ?></strong>
@@ -209,19 +246,22 @@ ob_start();
                                                 <?php endif; ?>
                                             </td>
                                             <td>
-                                                <div class="btn-group" role="group">
+                                                <div class="action-buttons">
                                                     <button type="button" class="btn btn-sm btn-outline-primary" 
                                                             data-bs-toggle="modal" 
-                                                            data-bs-target="#editCarouselModal<?php echo $image['id']; ?>">
-                                                        <i class="ti ti-edit"></i>
+                                                            data-bs-target="#editCarouselModal<?php echo $image['id']; ?>"
+                                                            title="Edit">
+                                                        <iconify-icon icon="solar:pen-bold"></iconify-icon>
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-warning" 
-                                                            onclick="toggleActiveStatus(<?php echo $image['id']; ?>, '<?php echo $image['is_active']; ?>')">
-                                                        <i class="ti ti-toggle-<?php echo $image['is_active'] ? 'right' : 'left'; ?>"></i>
+                                                            onclick="toggleActiveStatus(<?php echo $image['id']; ?>, '<?php echo $image['is_active']; ?>')"
+                                                            title="Toggle Status">
+                                                        <iconify-icon icon="solar:power-bold"></iconify-icon>
                                                     </button>
                                                     <button type="button" class="btn btn-sm btn-outline-danger" 
-                                                            onclick="deleteCarouselItem(<?php echo $image['id']; ?>)">
-                                                        <i class="ti ti-trash"></i>
+                                                            onclick="deleteCarouselItem(<?php echo $image['id']; ?>)"
+                                                            title="Delete">
+                                                        <iconify-icon icon="solar:trash-bin-trash-bold"></iconify-icon>
                                                     </button>
                                                 </div>
                                             </td>
@@ -236,11 +276,6 @@ ob_start();
                                 <?php endif; ?>
                             </tbody>
                         </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 </div>
 
 <!-- Add Carousel Modal -->

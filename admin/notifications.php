@@ -56,64 +56,90 @@ try {
 ob_start();
 ?>
 
-<div class="row">
-    <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex justify-content-between align-items-center">
-                <div>
-                    <h5 class="card-title mb-0">
-                        <i class="ti ti-bell me-2"></i>
-                        Notifications
-                    </h5>
-                    <small class="text-muted">
-                        <?php echo $unreadCount; ?> unread of <?php echo $totalCount; ?> total
-                    </small>
-                </div>
-                <div class="d-flex gap-2">
-                    <?php if ($unreadCount > 0): ?>
-                        <button class="btn btn-primary btn-sm" onclick="markAllAsRead()">
-                            <i class="ti ti-check-circle me-1"></i>
-                            Mark All Read
-                        </button>
-                    <?php endif; ?>
-                    <div class="btn-group" role="group">
-                        <a href="?filter=all" class="btn btn-outline-secondary btn-sm <?php echo $filter === 'all' ? 'active' : ''; ?>">
-                            All
-                        </a>
-                        <a href="?filter=unread" class="btn btn-outline-secondary btn-sm <?php echo $filter === 'unread' ? 'active' : ''; ?>">
-                            Unread (<?php echo $unreadCount; ?>)
-                        </a>
-                        <a href="?filter=read" class="btn btn-outline-secondary btn-sm <?php echo $filter === 'read' ? 'active' : ''; ?>">
-                            Read
-                        </a>
-                    </div>
-                </div>
-            </div>
-            <div class="card-body p-0">
-                <?php if (isset($error_message)): ?>
-                    <div class="alert alert-danger m-3">
-                        <i class="ti ti-alert-circle me-2"></i>
-                        <?php echo htmlspecialchars($error_message); ?>
-                    </div>
-                <?php elseif (empty($notifications)): ?>
-                    <div class="text-center py-5">
-                        <i class="ti ti-bell-off display-4 text-muted"></i>
-                        <h5 class="mt-3 text-muted">
-                            <?php if ($filter === 'unread'): ?>
-                                No unread notifications
-                            <?php elseif ($filter === 'read'): ?>
-                                No read notifications
-                            <?php else: ?>
-                                No notifications yet
-                            <?php endif; ?>
-                        </h5>
-                        <p class="text-muted">You're all caught up!</p>
-                    </div>
+<style>
+/* Override container-fluid max-width */
+.container-fluid {
+    max-width: none !important;
+    width: 100% !important;
+}
+
+.notifications-container {
+    height: 100vh;
+    overflow-y: auto;
+}
+
+.notification-item {
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.notification-item:hover {
+    background-color: #f8f9fa !important;
+}
+
+.notification-item.unread {
+    border-left-color: #5d87ff !important;
+    background-color: #f8f9fa;
+}
+</style>
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="fw-semibold mb-1">
+            <iconify-icon icon="solar:bell-bold" class="me-2"></iconify-icon>
+            Notifications
+        </h4>
+        <p class="text-muted mb-0">
+            <?php echo $unreadCount; ?> unread of <?php echo $totalCount; ?> total notifications
+        </p>
+    </div>
+    <div class="d-flex gap-2">
+        <?php if ($unreadCount > 0): ?>
+            <button class="btn btn-primary btn-sm" onclick="markAllAsRead()">
+                <iconify-icon icon="solar:check-circle-bold" class="me-1"></iconify-icon>
+                Mark All Read
+            </button>
+        <?php endif; ?>
+        <div class="btn-group" role="group">
+            <a href="?filter=all" class="btn btn-outline-secondary btn-sm <?php echo $filter === 'all' ? 'active' : ''; ?>">
+                All
+            </a>
+            <a href="?filter=unread" class="btn btn-outline-secondary btn-sm <?php echo $filter === 'unread' ? 'active' : ''; ?>">
+                Unread (<?php echo $unreadCount; ?>)
+            </a>
+            <a href="?filter=read" class="btn btn-outline-secondary btn-sm <?php echo $filter === 'read' ? 'active' : ''; ?>">
+                Read
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Notifications Container -->
+<div class="notifications-container bg-white rounded-3 border">
+    <?php if (isset($error_message)): ?>
+        <div class="alert alert-danger m-3">
+            <iconify-icon icon="solar:danger-circle-bold" class="me-2"></iconify-icon>
+            <?php echo htmlspecialchars($error_message); ?>
+        </div>
+    <?php elseif (empty($notifications)): ?>
+        <div class="text-center py-5">
+            <iconify-icon icon="solar:bell-off-linear" class="display-4 text-muted"></iconify-icon>
+            <h5 class="mt-3 text-muted">
+                <?php if ($filter === 'unread'): ?>
+                    No unread notifications
+                <?php elseif ($filter === 'read'): ?>
+                    No read notifications
                 <?php else: ?>
-                    <div class="list-group list-group-flush">
+                    No notifications yet
+                <?php endif; ?>
+            </h5>
+            <p class="text-muted">You're all caught up!</p>
+        </div>
+    <?php else: ?>
+        <div class="list-group list-group-flush">
                         <?php foreach ($notifications as $notification): ?>
-                            <div class="list-group-item list-group-item-action notification-item 
-                                        <?php echo $notification['status'] === 'unread' ? 'bg-light border-start border-primary border-3' : ''; ?>"
+                            <div class="list-group-item list-group-item-action notification-item <?php echo $notification['status'] === 'unread' ? 'unread' : ''; ?>"
                                  data-notification-id="<?php echo $notification['id']; ?>"
                                  onclick="handleNotificationClick(<?php echo $notification['id']; ?>, '<?php echo $notification['action_url']; ?>')"
                                  style="cursor: pointer;">
@@ -171,9 +197,6 @@ ob_start();
                         <?php endforeach; ?>
                     </div>
                 <?php endif; ?>
-            </div>
-        </div>
-    </div>
 </div>
 
 <script>
