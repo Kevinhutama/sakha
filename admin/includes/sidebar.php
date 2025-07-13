@@ -58,6 +58,12 @@ if (!class_exists('Database')) {
             <span class="hide-menu">Carousel Images</span>
           </a>
         </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="./product-management.php" aria-expanded="false">
+            <iconify-icon icon="solar:box-line-duotone"></iconify-icon>
+            <span class="hide-menu">Product Management</span>
+          </a>
+        </li>
         <!-- ---------------------------------- -->
         <!-- Dashboard -->
         <!-- ---------------------------------- -->
