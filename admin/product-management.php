@@ -125,16 +125,35 @@ ob_start();
 
 </style>
 
+<!-- Success/Error Messages -->
+<?php if (isset($_SESSION['success_message'])): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <iconify-icon icon="solar:check-circle-bold" class="me-2"></iconify-icon>
+        <?php echo htmlspecialchars($_SESSION['success_message']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <?php unset($_SESSION['success_message']); ?>
+<?php endif; ?>
+
+<?php if (isset($_SESSION['error_message'])): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <iconify-icon icon="solar:danger-circle-bold" class="me-2"></iconify-icon>
+        <?php echo htmlspecialchars($_SESSION['error_message']); ?>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    <?php unset($_SESSION['error_message']); ?>
+<?php endif; ?>
+
 <!-- Page Header -->
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
         <h4 class="fw-semibold mb-1">Product Management</h4>
         <p class="text-muted mb-0">Manage your products catalog</p>
     </div>
-    <button class="btn btn-primary" type="button">
+    <a href="add-product.php" class="btn btn-primary">
         <iconify-icon icon="solar:add-circle-bold" class="me-2"></iconify-icon>
         Add New Product
-    </button>
+    </a>
 </div>
 
 <!-- Search Bar -->
@@ -148,7 +167,7 @@ ob_start();
     <div class="col-md-8">
         <div class="d-flex justify-content-end">
             <small class="text-muted d-flex align-items-center">
-                <span id="productCount"><?php echo count($products); ?></span> products found
+                <span id="productCount"><?php echo count($products);?></span> products found
             </small>
         </div>
     </div>
@@ -300,10 +319,6 @@ document.getElementById('searchInput').addEventListener('input', function() {
 
 // Add button click handlers (without implementation)
 document.addEventListener('DOMContentLoaded', function() {
-    // Add New Product button
-    document.querySelector('.btn-primary').addEventListener('click', function() {
-        alert('Add New Product functionality will be implemented here');
-    });
     
     // Edit buttons
     document.querySelectorAll('.btn-outline-primary').forEach(btn => {
