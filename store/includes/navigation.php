@@ -19,9 +19,9 @@
               <li class="nav-item">
                 <a class="nav-link ms-0" href="about.html">About</a>
               </li>
-              <li class="nav-item">
-                <a class="nav-link ms-0" href="shop.html">Shop</a>
-              </li>
+                              <li class="nav-item">
+                  <a class="nav-link ms-0" href="shop.php">Shop</a>
+                </li>
               <li class="nav-item dropdown">
                 <a class="nav-link dropdown-toggle ms-0" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Products<svg class="bi" width="18" height="18"><use xlink:href="#chevron-down"></use></svg></a>
                 <ul class="dropdown-menu">
@@ -29,7 +29,7 @@
                     <a href="about.html" class="dropdown-item fs-5 fw-medium">About <span class="text-primary">(PRO)</span></a>
                   </li>
                   <li>
-                    <a href="shop.html" class="dropdown-item fs-5 fw-medium">Shop <span class="text-primary">(PRO)</span></a>
+                    <a href="shop.php" class="dropdown-item fs-5 fw-medium">Shop <span class="text-primary">(PRO)</span></a>
                   </li>
                   <li>
                     <a href="single-product.html" class="dropdown-item fs-5 fw-medium">Single Product <span class="text-primary">(PRO)</span></a>

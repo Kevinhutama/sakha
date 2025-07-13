@@ -86,7 +86,7 @@ function getImagePath($image, $isMobile = false) {
                     <div class="banner-content">
                       <h2>Welcome to Sakha</h2>
                       <p class="fs-3">Your spiritual companion for prayer and worship</p>
-                      <a href="shop.html" class="btn">Shop Now</a>
+                      <a href="shop.php" class="btn">Shop Now</a>
                     </div>
                   </div>
                   <div class="col-md-5"></div>
@@ -296,19 +296,19 @@ function getImagePath($image, $isMobile = false) {
       <div class="banner-content-1 position-relative" style="background:url('images/products/premium\ -\ 1.webp') no-repeat left; background-size: cover; height: 100%;">
         <div class="banner-content-text position-absolute" data-aos="fade" data-aos-delay="1000" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">
           <h2>Sajadah</h2>
-          <a href="shop.html" class="btn">Explore Products</a>
+          <a href="shop.php" class="btn">Explore Products</a>
         </div>
       </div>
       <div class="banner-content-2 position-relative" style="background:url('images/products/bolossom\ -\ 2.webp') no-repeat left; background-size: cover; height: 100%;">
         <div class="banner-content-text position-absolute" data-aos="fade" data-aos-delay="1000" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">
           <h2>Perfume</h2>
-          <a href="shop.html" class="btn">Explore Products</a>
+          <a href="shop.php" class="btn">Explore Products</a>
         </div>
       </div>
       <div class="banner-content-3 position-relative" style="background:url('images/products/blossom\ -\ 1.webp') no-repeat left; background-size: cover; height: 100%;">
         <div class="banner-content-text position-absolute" data-aos="fade" data-aos-delay="1000" data-aos-easing="ease-in" data-aos-duration="1000" data-aos-once="true">
           <h2>Books</h2>
-          <a href="shop.html" class="btn">Explore Products</a>
+          <a href="shop.php" class="btn">Explore Products</a>
         </div>
       </div>
     </section>
