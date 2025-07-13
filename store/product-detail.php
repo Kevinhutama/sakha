@@ -1,6 +1,7 @@
 <?php
 // No special database functionality needed for product detail page
 // This is a conversion from product-detail.html to product-detail.php with proper includes
+// Color selection and image loading will be handled by backend
 ?>
 <!DOCTYPE html>
 <html>
@@ -35,7 +36,7 @@
     
     <?php include 'includes/navigation.php'; ?>
     
-    <section class="hero-section jarallax d-flex align-items-center justify-content-center padding-medium pb-5" style="background: url(images/hero-img.jpg) no-repeat;">
+    <!-- <section class="hero-section jarallax d-flex align-items-center justify-content-center padding-medium pb-5" style="background: url(images/hero-img.jpg) no-repeat;">
       <div class="hero-content">
         <div class="container">
           <div class="row">
@@ -55,50 +56,50 @@
         </div>
       </div>
     </section>
-    
-    <section class="single-product padding-large">
+     -->
+    <section class="single-product padding-large" style= "margin-top: 100px;">
       <div class="container">
         <div class="row">
           <div class="col-lg-6">
             <div class="row product-preview">
-              <div class="swiper thumb-swiper col-3" style="position:relative; overflow-y: scroll;">
-                <div class="swiper-wrapper d-flex flex-wrap align-content-start" style="width: 100%; position:absolute;">
-                  <div class="swiper-slide">
-                    <img src="images/products/blossom - 1.webp" alt="" class="img-fluid">
-                  </div>
-                  <div class="swiper-slide">
-                    <img src="images/products/bolossom - 2.webp" alt="" class="img-fluid">
-                  </div>
-                  <div class="swiper-slide">
-                    <img src="images/products/premium - 1.webp" alt="" class="img-fluid">
-                  </div>
-                  <div class="swiper-slide">
-                    <img src="images/products/blossom - 1.webp" alt="" class="img-fluid">
-                  </div>
-                  <div class="swiper-slide">
-                    <img src="images/products/bolossom - 2.webp" alt="" class="img-fluid">
-                  </div>
-                </div>
-              </div>
-              <div class="swiper large-swiper overflow-hidden col-9">
-                <div class="swiper-wrapper">
-                  <div class="swiper-slide">
-                    <img src="images/products/blossom - 1.webp" alt="single-product" class="img-fluid">
-                  </div>
-                  <div class="swiper-slide">
-                    <img src="images/products/bolossom - 2.webp" alt="single-product" class="img-fluid">
-                  </div>
-                  <div class="swiper-slide">
-                    <img src="images/products/premium - 1.webp" alt="single-product" class="img-fluid">
-                  </div>
-                  <div class="swiper-slide">
-                    <img src="images/products/blossom - 1.webp" alt="single-product" class="img-fluid">
-                  </div>
-                  <div class="swiper-slide">
-                    <img src="images/products/bolossom - 2.webp" alt="single-product" class="img-fluid">
+                              <div class="swiper thumb-swiper col-3" style="position:relative; overflow-y: scroll;">
+                  <div class="swiper-wrapper d-flex flex-wrap align-content-start" style="width: 100%; position:absolute;">
+                    <div class="swiper-slide">
+                      <img src="images/products/blossom - 1.webp" alt="" class="img-fluid">
+                    </div>
+                    <div class="swiper-slide">
+                      <img src="images/products/bolossom - 2.webp" alt="" class="img-fluid">
+                    </div>
+                    <div class="swiper-slide">
+                      <img src="images/products/premium - 1.webp" alt="" class="img-fluid">
+                    </div>
+                    <div class="swiper-slide">
+                      <img src="images/products/blossom - 1.webp" alt="" class="img-fluid">
+                    </div>
+                    <div class="swiper-slide">
+                      <img src="images/products/bolossom - 2.webp" alt="" class="img-fluid">
+                    </div>
                   </div>
                 </div>
-              </div>
+                              <div class="swiper large-swiper overflow-hidden col-9">
+                  <div class="swiper-wrapper">
+                    <div class="swiper-slide">
+                      <img src="images/products/blossom - 1.webp" alt="single-product" class="img-fluid">
+                    </div>
+                    <div class="swiper-slide">
+                      <img src="images/products/bolossom - 2.webp" alt="single-product" class="img-fluid">
+                    </div>
+                    <div class="swiper-slide">
+                      <img src="images/products/premium - 1.webp" alt="single-product" class="img-fluid">
+                    </div>
+                    <div class="swiper-slide">
+                      <img src="images/products/blossom - 1.webp" alt="single-product" class="img-fluid">
+                    </div>
+                    <div class="swiper-slide">
+                      <img src="images/products/bolossom - 2.webp" alt="single-product" class="img-fluid">
+                    </div>
+                  </div>
+                </div>
             </div>
           </div>
           <div class="col-lg-6">
@@ -152,9 +153,38 @@
                     </li>
                   </ul>
                 </div>
+                <div class="custom-name-pouch product-select my-3">
+                  <h4 class="item-title text-decoration-underline text-uppercase">Custom Name</h4>
+                  <div class="custom-name-option">
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="checkbox" value="" id="enablePouchName">
+                      <label class="form-check-label" for="enablePouchName">
+                        Add name to pouch (+RP 5,000)
+                      </label>
+                    </div>
+                    <div class="custom-name-input" id="pouchNameInput" style="display: none;">
+                      <input type="text" class="form-control" id="pouchNameText" placeholder="Enter name for pouch (max 15 characters)" maxlength="15">
+                      <small class="form-text text-muted">Letters, numbers, and spaces only</small>
+                    </div>
+                  </div>
+                  <div class="custom-name-option">
+                    <div class="form-check mb-2">
+                      <input class="form-check-input" type="checkbox" value="" id="enableSajadahName">
+                      <label class="form-check-label" for="enableSajadahName">
+                        Add name to sajadah (+RP 5,000)
+                      </label>
+                    </div>
+                    <div class="custom-name-input" id="sajadahNameInput" style="display: none;">
+                      <input type="text" class="form-control" id="sajadahNameText" placeholder="Enter name for sajadah (max 20 characters)" maxlength="20">
+                      <small class="form-text text-muted">Letters, numbers, and spaces only</small>
+                    </div>
+                  </div>
+                </div>
+               
+                
                 <div class="product-quantity my-3">
                   <div class="item-title">
-                    <l>5 in stock</l>
+                    <l>Quantity</l>
                   </div>
                   <div class="stock-button-wrap d-flex flex-wrap align-items-center">
                     <div class="product-quantity">
@@ -514,6 +544,56 @@
         color: white;
         font-weight: bold;
     }
+    
+    /* Custom name sections styling */
+    .custom-name-pouch, .custom-name-sajadah {
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+        margin-top: 20px;
+    }
+    
+    .custom-name-input {
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        margin-top: 10px;
+    }
+    
+    .custom-name-input input[type="text"] {
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        padding: 10px 15px;
+        font-size: 14px;
+        transition: border-color 0.3s ease;
+    }
+    
+    .custom-name-input input[type="text"]:focus {
+        border-color: #333;
+        box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.1);
+        outline: none;
+    }
+    
+    .form-check-label {
+        cursor: pointer;
+        font-weight: 500;
+    }
+    
+    .form-check-input:checked {
+        background-color: #333;
+        border-color: #333;
+    }
+    
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.1);
+        border-color: #333;
+    }
+    
+    .custom-name-option .form-text {
+        color: #6c757d;
+        font-size: 12px;
+        margin-top: 5px;
+    }
     </style>
 
     <script src="js/jquery-1.11.0.min.js"></script>
@@ -527,22 +607,49 @@
         $('.color-options .select-item').on('click', function(e) {
             e.preventDefault();
             
-            // Remove active class from all color options
-            $('.color-options .select-item').removeClass('active');
-            
-            // Add active class to clicked item
-            $(this).addClass('active');
-            
             // Get selected color value
             var selectedColor = $(this).data('val');
             console.log('Selected color:', selectedColor);
             
-            // You can add additional logic here to handle color selection
-            // For example, update product images based on selected color
+            // Create URL with color parameter, preserving other parameters
+            var urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('color', selectedColor.toLowerCase());
+            
+            var currentUrl = window.location.pathname;
+            var newUrl = currentUrl + '?' + urlParams.toString();
+            
+            // Reload page with color parameter
+            window.location.href = newUrl;
         });
         
-        // Set first color as default active
-        $('.color-options .select-item:first').addClass('active');
+        // Set active color based on URL parameter or default to first
+        function setActiveColor() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var selectedColor = urlParams.get('color');
+            
+            if (selectedColor) {
+                // Find and activate the color from URL parameter
+                var colorFound = false;
+                $('.color-options .select-item').each(function() {
+                    var colorValue = $(this).data('val').toLowerCase();
+                    if (colorValue === selectedColor.toLowerCase()) {
+                        $(this).addClass('active');
+                        colorFound = true;
+                        return false; // break the loop
+                    }
+                });
+                
+                // If color from URL not found, default to first color
+                if (!colorFound) {
+                    $('.color-options .select-item:first').addClass('active');
+                }
+            } else {
+                // No color parameter, default to first color
+                $('.color-options .select-item:first').addClass('active');
+            }
+        }
+        
+        setActiveColor();
         
         // Handle size selection
         $('.swatch .select-item').on('click', function(e) {
@@ -561,6 +668,49 @@
         
         // Set first size as default active
         $('.swatch .select-item:first').addClass('active');
+        
+        // Handle custom name checkboxes
+        $('#enablePouchName').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#pouchNameInput').slideDown(300);
+                $('#pouchNameText').focus();
+            } else {
+                $('#pouchNameInput').slideUp(300);
+                $('#pouchNameText').val('');
+            }
+        });
+        
+        $('#enableSajadahName').on('change', function() {
+            if ($(this).is(':checked')) {
+                $('#sajadahNameInput').slideDown(300);
+                $('#sajadahNameText').focus();
+            } else {
+                $('#sajadahNameInput').slideUp(300);
+                $('#sajadahNameText').val('');
+            }
+        });
+        
+        // Validate custom name inputs (letters, numbers, spaces only)
+        $('#pouchNameText, #sajadahNameText').on('input', function() {
+            var value = $(this).val();
+            var validValue = value.replace(/[^a-zA-Z0-9 ]/g, '');
+            if (value !== validValue) {
+                $(this).val(validValue);
+            }
+        });
+        
+        // Show character count
+        $('#pouchNameText').on('input', function() {
+            var length = $(this).val().length;
+            var maxLength = $(this).attr('maxlength');
+            $(this).next('.form-text').text('Letters, numbers, and spaces only (' + length + '/' + maxLength + ')');
+        });
+        
+        $('#sajadahNameText').on('input', function() {
+            var length = $(this).val().length;
+            var maxLength = $(this).attr('maxlength');
+            $(this).next('.form-text').text('Letters, numbers, and spaces only (' + length + '/' + maxLength + ')');
+        });
     });
     </script>
     
