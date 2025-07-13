@@ -1,6 +1,30 @@
 -- Products Management System DDL
 -- Created for Sakha E-commerce Platform
 
+-- ========================================
+-- DROP STATEMENTS FOR ROLLBACK
+-- ========================================
+-- Run these statements to completely remove all product-related tables and data
+-- WARNING: This will permanently delete all product data!
+
+-- Drop view first
+DROP VIEW IF EXISTS product_details;
+
+-- Drop tables with foreign key dependencies first (child tables)
+DROP TABLE IF EXISTS related_products;
+DROP TABLE IF EXISTS product_images;
+DROP TABLE IF EXISTS product_sizes;
+DROP TABLE IF EXISTS product_colors;
+DROP TABLE IF EXISTS product_categories;
+
+-- Drop main tables last (parent tables)
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS categories;
+
+-- ========================================
+-- CREATE STATEMENTS
+-- ========================================
+
 -- Categories Table
 CREATE TABLE categories (
     id INT PRIMARY KEY AUTO_INCREMENT,
@@ -16,20 +40,15 @@ CREATE TABLE categories (
 CREATE TABLE products (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
-    slug VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
     short_description TEXT,
-    sku VARCHAR(100) UNIQUE NOT NULL,
     price DECIMAL(10,2) NOT NULL,
     discounted_price DECIMAL(10,2) DEFAULT NULL,
-    stock_quantity INT DEFAULT 0,
     custom_name_enabled BOOLEAN DEFAULT FALSE,
     pouch_custom_price DECIMAL(10,2) DEFAULT 5000.00,
     sajadah_custom_price DECIMAL(10,2) DEFAULT 5000.00,
     status ENUM('active', 'inactive') DEFAULT 'active',
     featured BOOLEAN DEFAULT FALSE,
-    meta_title VARCHAR(255),
-    meta_description TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -99,8 +118,6 @@ CREATE TABLE related_products (
 
 -- Indexes for better performance
 CREATE INDEX idx_products_status ON products(status);
-CREATE INDEX idx_products_slug ON products(slug);
-CREATE INDEX idx_products_sku ON products(sku);
 CREATE INDEX idx_product_colors_status ON product_colors(product_id, status);
 CREATE INDEX idx_product_images_primary ON product_images(product_id, is_primary);
 CREATE INDEX idx_categories_status ON categories(status);

@@ -116,18 +116,7 @@ ob_start();
     font-size: 0.7em;
 }
 
-.stock-indicator {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    margin-right: 5px;
-}
 
-.stock-low { background-color: #dc3545; }
-.stock-medium { background-color: #ffc107; }
-.stock-high { background-color: #28a745; }
-.stock-out { background-color: #6c757d; }
 </style>
 
 <div class="row">
@@ -168,7 +157,6 @@ ob_start();
                                 <th>Categories</th>
                                 <th>Colors</th>
                                 <th>Price</th>
-                                <th>Stock</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -190,7 +178,6 @@ ob_start();
                                 <td>
                                     <div class="product-info">
                                         <h6><?php echo htmlspecialchars($product['name']); ?></h6>
-                                        <small>SKU: <?php echo htmlspecialchars($product['sku']); ?></small>
                                         <small><?php echo htmlspecialchars(substr($product['short_description'], 0, 60)) . '...'; ?></small>
                                     </div>
                                 </td>
@@ -233,24 +220,6 @@ ob_start();
                                         <?php else: ?>
                                             <div>Rp <?php echo number_format($product['price'], 0, ',', '.'); ?></div>
                                         <?php endif; ?>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div class="stock-info">
-                                        <?php 
-                                        $stockClass = '';
-                                        if ($product['stock_quantity'] == 0) {
-                                            $stockClass = 'stock-out';
-                                        } elseif ($product['stock_quantity'] <= 5) {
-                                            $stockClass = 'stock-low';
-                                        } elseif ($product['stock_quantity'] <= 10) {
-                                            $stockClass = 'stock-medium';
-                                        } else {
-                                            $stockClass = 'stock-high';
-                                        }
-                                        ?>
-                                        <span class="stock-indicator <?php echo $stockClass; ?>"></span>
-                                        <?php echo $product['stock_quantity']; ?> units
                                     </div>
                                 </td>
                                 <td>
@@ -298,21 +267,16 @@ document.getElementById('searchInput').addEventListener('input', function() {
     productRows.forEach(row => {
         const productInfo = row.querySelector('.product-info');
         const categoryBadges = row.querySelector('.category-badges');
-        const stockInfo = row.querySelector('.stock-info');
         
         // Get text content for search
         const productName = productInfo.querySelector('h6').textContent.toLowerCase();
-        const productSku = productInfo.querySelector('small').textContent.toLowerCase();
-        const productDesc = productInfo.querySelectorAll('small')[1] ? productInfo.querySelectorAll('small')[1].textContent.toLowerCase() : '';
+        const productDesc = productInfo.querySelector('small') ? productInfo.querySelector('small').textContent.toLowerCase() : '';
         const categories = categoryBadges.textContent.toLowerCase();
-        const stockText = stockInfo.textContent.toLowerCase();
         
         // Check if search term matches any of the content
         if (productName.includes(searchTerm) || 
-            productSku.includes(searchTerm) || 
             productDesc.includes(searchTerm) || 
-            categories.includes(searchTerm) || 
-            stockText.includes(searchTerm)) {
+            categories.includes(searchTerm)) {
             row.style.display = '';
             visibleCount++;
         } else {
