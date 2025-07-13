@@ -61,8 +61,8 @@
         <div class="row">
           <div class="col-lg-6">
             <div class="row product-preview">
-              <div class="swiper thumb-swiper col-3">
-                <div class="swiper-wrapper d-flex flex-wrap align-content-start">
+              <div class="swiper thumb-swiper col-3" style="position:relative; overflow-y: scroll;">
+                <div class="swiper-wrapper d-flex flex-wrap align-content-start" style="width: 100%; position:absolute;">
                   <div class="swiper-slide">
                     <img src="images/products/blossom - 1.webp" alt="" class="img-fluid">
                   </div>
