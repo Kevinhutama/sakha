@@ -72,6 +72,12 @@
                   <div class="swiper-slide">
                     <img src="images/products/premium - 1.webp" alt="" class="img-fluid">
                   </div>
+                  <div class="swiper-slide">
+                    <img src="images/products/blossom - 1.webp" alt="" class="img-fluid">
+                  </div>
+                  <div class="swiper-slide">
+                    <img src="images/products/bolossom - 2.webp" alt="" class="img-fluid">
+                  </div>
                 </div>
               </div>
               <div class="swiper large-swiper overflow-hidden col-9">
@@ -84,6 +90,12 @@
                   </div>
                   <div class="swiper-slide">
                     <img src="images/products/premium - 1.webp" alt="single-product" class="img-fluid">
+                  </div>
+                  <div class="swiper-slide">
+                    <img src="images/products/blossom - 1.webp" alt="single-product" class="img-fluid">
+                  </div>
+                  <div class="swiper-slide">
+                    <img src="images/products/bolossom - 2.webp" alt="single-product" class="img-fluid">
                   </div>
                 </div>
               </div>
