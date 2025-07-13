@@ -64,6 +64,12 @@ if (!class_exists('Database')) {
             <span class="hide-menu">Product Management</span>
           </a>
         </li>
+        <li class="sidebar-item">
+          <a class="sidebar-link" href="./category-management.php" aria-expanded="false">
+            <iconify-icon icon="solar:folder-line-duotone"></iconify-icon>
+            <span class="hide-menu">Category Management</span>
+          </a>
+        </li>
         <!-- ---------------------------------- -->
         <!-- Dashboard -->
         <!-- ---------------------------------- -->
