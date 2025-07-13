@@ -118,13 +118,22 @@
                     <h4 class="item-title text-decoration-underline text-uppercase">Color:</h4>
                     <ul class="select-list list-unstyled d-flex mb-0">
                       <li class="select-item me-3" data-val="Pink" title="Pink">
-                        <a href="#">Pink</a>
+                        <a href="#" class="color-swatch d-flex align-items-center">
+                          <span class="color-indicator me-2" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: #FF69B4; border: 2px solid #ddd;"></span>
+                          Pink
+                        </a>
                       </li>
                       <li class="select-item me-3" data-val="Blue" title="Blue">
-                        <a href="#">Blue</a>
+                        <a href="#" class="color-swatch d-flex align-items-center">
+                          <span class="color-indicator me-2" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: #4169E1; border: 2px solid #ddd;"></span>
+                          Blue
+                        </a>
                       </li>
                       <li class="select-item me-3" data-val="Green" title="Green">
-                        <a href="#">Green</a>
+                        <a href="#" class="color-swatch d-flex align-items-center">
+                          <span class="color-indicator me-2" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: #228B22; border: 2px solid #ddd;"></span>
+                          Green
+                        </a>
                       </li>
                     </ul>
                   </div>
@@ -434,10 +443,126 @@
     
     <?php include 'includes/login-modal.php'; ?>
 
+    <style>
+    .color-swatch {
+        text-decoration: none !important;
+        color: inherit;
+        transition: all 0.3s ease;
+    }
+    
+    .color-swatch:hover {
+        color: inherit;
+        text-decoration: none;
+    }
+    
+    .color-indicator {
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    .color-swatch:hover .color-indicator {
+        transform: scale(1.1);
+        border-color: #333 !important;
+    }
+    
+    .select-item.active .color-indicator {
+        border-color: #333 !important;
+        border-width: 2px !important;
+        box-shadow: 0 0 0 3px rgba(0,0,0,0.3);
+        transform: scale(1.2);
+        position: relative;
+    }
+    
+    .select-item.active .color-indicator::after {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 10px;
+        font-weight: bold;
+        text-shadow: 0 0 2px rgba(0,0,0,0.8);
+    }
+    
+    .select-item.active .color-swatch {
+        font-weight: bold;
+        color: #333;
+    }
+    
+    /* Size selection styling */
+    .swatch .select-item a {
+        text-decoration: none;
+        color: inherit;
+        padding: 8px 16px;
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        transition: all 0.3s ease;
+        display: inline-block;
+    }
+    
+    .swatch .select-item a:hover {
+        color: inherit;
+        text-decoration: none;
+        border-color: #333;
+        background-color: #f8f9fa;
+    }
+    
+    .swatch .select-item.active a {
+        border-color: #333;
+        background-color: #333;
+        color: white;
+        font-weight: bold;
+    }
+    </style>
+
     <script src="js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="js/plugins.js"></script>
     <script type="text/javascript" src="js/script.js"></script>
+    
+    <script>
+    $(document).ready(function() {
+        // Handle color selection
+        $('.color-options .select-item').on('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all color options
+            $('.color-options .select-item').removeClass('active');
+            
+            // Add active class to clicked item
+            $(this).addClass('active');
+            
+            // Get selected color value
+            var selectedColor = $(this).data('val');
+            console.log('Selected color:', selectedColor);
+            
+            // You can add additional logic here to handle color selection
+            // For example, update product images based on selected color
+        });
+        
+        // Set first color as default active
+        $('.color-options .select-item:first').addClass('active');
+        
+        // Handle size selection
+        $('.swatch .select-item').on('click', function(e) {
+            e.preventDefault();
+            
+            // Remove active class from all size options
+            $('.swatch .select-item').removeClass('active');
+            
+            // Add active class to clicked item
+            $(this).addClass('active');
+            
+            // Get selected size value
+            var selectedSize = $(this).data('value');
+            console.log('Selected size:', selectedSize);
+        });
+        
+        // Set first size as default active
+        $('.swatch .select-item:first').addClass('active');
+    });
+    </script>
     
     <?php include 'includes/auth-scripts.php'; ?>
   </body>
