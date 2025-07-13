@@ -149,8 +149,9 @@
               </div>
               <div class="col-lg-4 col-md-6">
                 <div class="product-card mb-3 position-relative">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/products/premium - 1.webp" alt="Premium Prayer Mat" class="img-fluid zoom-in">
+                  <div class="image-holder">
+                    <img src="images/products/premium - 1.webp" alt="Premium Prayer Mat" class="img-fluid primary-image">
+                    <img src="images/products/premium - 2.webp" alt="Premium Prayer Mat Secondary" class="img-fluid secondary-image">
                     <div class="cart-concern position-absolute">
                       <div class="cart-button">
                         <a href="#" class="btn">Add to Cart</a>
@@ -167,8 +168,9 @@
               </div>
               <div class="col-lg-4 col-md-6">
                 <div class="product-card mb-3 position-relative">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/products/bolossom - 2.webp" alt="Blossom Sajadah Set" class="img-fluid zoom-in">
+                  <div class="image-holder">
+                    <img src="images/products/bolossom - 2.webp" alt="Blossom Sajadah Set" class="img-fluid primary-image">
+                    <img src="images/products/blossom - 1.webp" alt="Blossom Sajadah Set Secondary" class="img-fluid secondary-image">
                     <div class="cart-concern position-absolute">
                       <div class="cart-button">
                         <a href="#" class="btn">Add to Cart</a>
@@ -185,8 +187,9 @@
               </div>
               <div class="col-lg-4 col-md-6">
                 <div class="product-card mb-3 position-relative">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/products/azhara - 1.webp" alt="Azhara Sacred Mat" class="img-fluid zoom-in">
+                  <div class="image-holder">
+                    <img src="images/products/azhara - 1.webp" alt="Azhara Sacred Mat" class="img-fluid primary-image">
+                    <img src="images/products/premium - 1.webp" alt="Azhara Sacred Mat Secondary" class="img-fluid secondary-image">
                     <div class="cart-concern position-absolute">
                       <div class="cart-button">
                         <a href="#" class="btn">Add to Cart</a>
@@ -203,8 +206,9 @@
               </div>
               <div class="col-lg-4 col-md-6">
                 <div class="product-card mb-3 position-relative">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/products/premium - 2.webp" alt="Premium Black Mat" class="img-fluid zoom-in">
+                  <div class="image-holder">
+                    <img src="images/products/premium - 2.webp" alt="Premium Black Mat" class="img-fluid primary-image">
+                    <img src="images/products/premium - 1.webp" alt="Premium Black Mat Secondary" class="img-fluid secondary-image">
                     <div class="cart-concern position-absolute">
                       <div class="cart-button">
                         <a href="#" class="btn">Add to Cart</a>
@@ -221,8 +225,9 @@
               </div>
               <div class="col-lg-4 col-md-6">
                 <div class="product-card mb-3 position-relative">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/products/blossom - 1.webp" alt="Blossom Prayer Collection" class="img-fluid zoom-in">
+                  <div class="image-holder">
+                    <img src="images/products/blossom - 1.webp" alt="Blossom Prayer Collection" class="img-fluid primary-image">
+                    <img src="images/products/bolossom - 2.webp" alt="Blossom Prayer Collection Secondary" class="img-fluid secondary-image">
                     <div class="cart-concern position-absolute">
                       <div class="cart-button">
                         <a href="#" class="btn">Add to Cart</a>
@@ -239,8 +244,9 @@
               </div>
               <div class="col-lg-4 col-md-6">
                 <div class="product-card mb-3 position-relative">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/products/bolossom - 2.webp" alt="Blossom Sajadah Set" class="img-fluid zoom-in">
+                  <div class="image-holder">
+                    <img src="images/products/bolossom - 2.webp" alt="Blossom Sajadah Set" class="img-fluid primary-image">
+                    <img src="images/products/blossom - 1.webp" alt="Blossom Sajadah Set Secondary" class="img-fluid secondary-image">
                     <div class="cart-concern position-absolute">
                       <div class="cart-button">
                         <a href="#" class="btn">Add to Cart</a>
@@ -257,8 +263,9 @@
               </div>
               <div class="col-lg-4 col-md-6">
                 <div class="product-card mb-3 position-relative">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/products/azhara - 1.webp" alt="Azhara Sacred Mat" class="img-fluid zoom-in">
+                  <div class="image-holder">
+                    <img src="images/products/azhara - 1.webp" alt="Azhara Sacred Mat" class="img-fluid primary-image">
+                    <img src="images/products/premium - 2.webp" alt="Azhara Sacred Mat Secondary" class="img-fluid secondary-image">
                     <div class="cart-concern position-absolute">
                       <div class="cart-button">
                         <a href="#" class="btn">Add to Cart</a>
@@ -275,8 +282,9 @@
               </div>
               <div class="col-lg-4 col-md-6">
                 <div class="product-card mb-3 position-relative">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/products/premium - 2.webp" alt="Premium Black Mat" class="img-fluid zoom-in">
+                  <div class="image-holder">
+                    <img src="images/products/premium - 2.webp" alt="Premium Black Mat" class="img-fluid primary-image">
+                    <img src="images/products/azhara - 1.webp" alt="Premium Black Mat Secondary" class="img-fluid secondary-image">
                     <div class="cart-concern position-absolute">
                       <div class="cart-button">
                         <a href="#" class="btn">Add to Cart</a>
@@ -288,6 +296,24 @@
                       <a href="single-product.html">Premium Black Mat</a>
                     </h5>
                     <span class="item-price text-primary fs-3 fw-light">RP 150,000</span>
+                  </div>
+                </div>
+              </div>
+              <div class="col-lg-4 col-md-6">
+                <div class="product-card position-relative mb-3">
+                  <div class="image-holder zoom-effect">
+                    <img src="images/product-item5.jpg" alt="product-item" class="img-fluid zoom-in">
+                    <div class="cart-concern position-absolute">
+                      <div class="cart-button">
+                        <a href="#" class="btn">Add to Cart</a>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="card-detail text-center pt-3 pb-2">
+                    <h5 class="card-title fs-3 text-capitalize">
+                      <a href="#">Shell Shape</a>
+                    </h5>
+                    <span class="item-price text-primary fs-3 fw-light">RP 110,000</span>
                   </div>
                 </div>
               </div>
@@ -344,37 +370,7 @@
                   </li>
                 </ul>
               </div>
-              <div class="widget-product-tags pt-3">
-                <h5 class="widget-title text-decoration-underline text-uppercase">Tags</h5>
-                <ul class="product-tags sidebar-list list-unstyled">
-                  <li class="tags-item">
-                    <a href="">Premium</a>
-                  </li>
-                  <li class="tags-item">
-                    <a href="">Affordable</a>
-                  </li>
-                  <li class="tags-item">
-                    <a href="">Traditional</a>
-                  </li>
-                  <li class="tags-item">
-                    <a href="">Modern</a>
-                  </li>
-                </ul>
-              </div>
-              <div class="widget-product-brands pt-3">
-                <h5 class="widget-title text-decoration-underline text-uppercase">Other Products</h5>
-                <ul class="product-tags sidebar-list list-unstyled">
-                  <li class="tags-item">
-                    <a href="">Islamic Books</a>
-                  </li>
-                  <li class="tags-item">
-                    <a href="">Prayer Oils</a>
-                  </li>
-                  <li class="tags-item">
-                    <a href="">Accessories</a>
-                  </li>
-                </ul>
-              </div>
+              
               <div class="widget-price-filter pt-3">
                 <h5 class="widget-title text-decoration-underline text-uppercase">Filter By Price</h5>
                 <ul class="product-tags sidebar-list list-unstyled">
