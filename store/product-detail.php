@@ -330,8 +330,8 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
                       </label>
                     </div>
                     <div class="custom-name-input" id="pouchNameInput" style="display: none;">
-                      <input type="text" class="form-control" id="pouchNameText" placeholder="Enter name for pouch (max 15 characters)" maxlength="15">
-                      <small class="form-text text-muted">Letters, numbers, and spaces only</small>
+                      <input type="text" class="form-control" id="pouchNameText" placeholder="Enter name for pouch (max 30 characters)" maxlength="30">
+                      <small class="form-text text-muted">All characters allowed</small>
                     </div>
                   </div>
                   <div class="custom-name-option">
@@ -342,8 +342,8 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
                       </label>
                     </div>
                     <div class="custom-name-input" id="sajadahNameInput" style="display: none;">
-                      <input type="text" class="form-control" id="sajadahNameText" placeholder="Enter name for sajadah (max 20 characters)" maxlength="20">
-                      <small class="form-text text-muted">Letters, numbers, and spaces only</small>
+                      <input type="text" class="form-control" id="sajadahNameText" placeholder="Enter name for sajadah (max 40 characters)" maxlength="40">
+                      <small class="form-text text-muted">All characters allowed</small>
                     </div>
                   </div>
                 </div>
@@ -379,12 +379,6 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
               </div>
               <hr>
               <div class="meta-product">
-                <div class="meta-item d-flex mb-1">
-                  <span class="text-uppercase me-2">SKU:</span>
-                  <ul class="select-list list-unstyled d-flex mb-0">
-                    <li data-value="S" class="select-item"><?php echo htmlspecialchars($product['slug']); ?></li>
-                  </ul>
-                </div>
                 <?php if (!empty($categories)): ?>
                 <div class="meta-item d-flex mb-1">
                   <span class="text-uppercase me-2">Category:</span>
@@ -667,17 +661,7 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
         position: relative;
     }
     
-    .select-item.active .color-indicator::after {
-        content: '✓';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        color: white;
-        font-size: 10px;
-        font-weight: bold;
-        text-shadow: 0 0 2px rgba(0,0,0,0.8);
-    }
+
     
     .select-item.active .color-swatch {
         font-weight: bold;
@@ -863,26 +847,19 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
             }
         });
         
-        // Validate custom name inputs (letters, numbers, spaces only)
-        $('#pouchNameText, #sajadahNameText').on('input', function() {
-            var value = $(this).val();
-            var validValue = value.replace(/[^a-zA-Z0-9 ]/g, '');
-            if (value !== validValue) {
-                $(this).val(validValue);
-            }
-        });
+        // Custom name inputs - no character validation, all characters allowed
         
         // Show character count
         $('#pouchNameText').on('input', function() {
             var length = $(this).val().length;
             var maxLength = $(this).attr('maxlength');
-            $(this).next('.form-text').text('Letters, numbers, and spaces only (' + length + '/' + maxLength + ')');
+            $(this).next('.form-text').text('All characters allowed (' + length + '/' + maxLength + ')');
         });
         
         $('#sajadahNameText').on('input', function() {
             var length = $(this).val().length;
             var maxLength = $(this).attr('maxlength');
-            $(this).next('.form-text').text('Letters, numbers, and spaces only (' + length + '/' + maxLength + ')');
+            $(this).next('.form-text').text('All characters allowed (' + length + '/' + maxLength + ')');
         });
     });
     </script>
