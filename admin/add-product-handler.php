@@ -528,13 +528,14 @@ try {
     // Clear form data from session
     unset($_SESSION['form_data']);
     
-    // Success message
+    // Success message and redirect back to the same page
     if ($edit_mode) {
         $_SESSION['success_message'] = 'Product "' . $name . '" has been updated successfully!';
+        header('Location: add-product.php?id=' . $product_id);
     } else {
         $_SESSION['success_message'] = 'Product "' . $name . '" has been created successfully!';
+        header('Location: add-product.php?id=' . $product_id);
     }
-    header('Location: product-management.php');
     exit;
     
 } catch (Exception $e) {

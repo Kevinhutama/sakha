@@ -406,6 +406,32 @@ if (isset($_SESSION['form_data'])) {
 </style>
 
 <div class="container-fluid">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-semibold mb-1"><?php echo $edit_mode ? 'Edit Product' : 'Add New Product'; ?></h4>
+            <p class="text-muted mb-0"><?php echo $edit_mode ? 'Update product information' : 'Add a new product to your catalog'; ?></p>
+        </div>
+        <div>
+            <?php if (!$edit_mode): ?>
+                <button type="button" class="btn btn-info me-2" onclick="generateDefaultValues()">
+                    <iconify-icon icon="solar:magic-stick-3-linear" class="me-2"></iconify-icon>
+                    Generate
+                </button>
+            <?php endif; ?>
+            <a href="product-management.php" class="btn btn-outline-secondary me-2">
+                <iconify-icon icon="solar:arrow-left-linear" class="me-2"></iconify-icon>
+                Back to Products
+            </a>
+            <?php if ($edit_mode && isset($_SESSION['success_message'])): ?>
+                <a href="../store/product-detail.php?slug=<?php echo htmlspecialchars($existing_product['slug']); ?>" target="_blank" class="btn btn-outline-info me-2">
+                    <iconify-icon icon="solar:eye-linear" class="me-2"></iconify-icon>
+                    Preview
+                </a>
+            <?php endif; ?>
+        </div>
+    </div>
+
     <!-- Success/Error Messages -->
     <?php if (isset($_SESSION['success_message'])): ?>
         <div class="alert alert-success alert-dismissible fade show" role="alert">
@@ -424,32 +450,6 @@ if (isset($_SESSION['form_data'])) {
         </div>
         <?php unset($_SESSION['error_message']); ?>
     <?php endif; ?>
-
-    <!-- Page Header -->
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <div>
-            <h4 class="fw-semibold mb-1"><?php echo $edit_mode ? 'Edit Product' : 'Add New Product'; ?></h4>
-            <p class="text-muted mb-0"><?php echo $edit_mode ? 'Update product information' : 'Add a new product to your catalog'; ?></p>
-        </div>
-        <div>
-            <?php if (!$edit_mode): ?>
-                <button type="button" class="btn btn-info me-2" onclick="generateDefaultValues()">
-                    <iconify-icon icon="solar:magic-stick-3-linear" class="me-2"></iconify-icon>
-                    Generate
-                </button>
-            <?php endif; ?>
-            <a href="product-management.php" class="btn btn-outline-secondary me-2">
-                <iconify-icon icon="solar:arrow-left-linear" class="me-2"></iconify-icon>
-                Back to Products
-            </a>
-            <?php if ($edit_mode): ?>
-                <a href="../store/product-detail.php?slug=<?php echo htmlspecialchars($existing_product['slug']); ?>" target="_blank" class="btn btn-outline-info me-2">
-                    <iconify-icon icon="solar:eye-linear" class="me-2"></iconify-icon>
-                    Preview
-                </a>
-            <?php endif; ?>
-        </div>
-    </div>
 
     <form id="addProductForm" action="add-product-handler.php" method="POST" enctype="multipart/form-data">
         <?php if ($edit_mode): ?>
