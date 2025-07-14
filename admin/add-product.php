@@ -103,6 +103,17 @@ if ($edit_mode && $product_id) {
                 ksort($color_images_by_order);
                 $form_data['color_images'] = array_values($color_images_by_order);
             }
+            
+            // Get product thumbnails
+            $thumbnailQuery = "SELECT primary_image, secondary_image FROM product_thumbnails WHERE product_id = ?";
+            $thumbnailStmt = $db->prepare($thumbnailQuery);
+            $thumbnailStmt->execute([$product_id]);
+            $thumbnails = $thumbnailStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($thumbnails) {
+                $form_data['primary_thumbnail'] = $thumbnails['primary_image'];
+                $form_data['secondary_thumbnail'] = $thumbnails['secondary_image'];
+            }
         }
         
     } catch (PDOException $e) {
@@ -248,6 +259,96 @@ if (isset($_SESSION['form_data'])) {
     right: 2px;
     background: #dc3545;
     color: white;
+}
+
+/* Thumbnail Upload Styles */
+.thumbnail-upload-section {
+    border: 2px dashed #ddd;
+    border-radius: 6px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f8f9fa;
+}
+
+.thumbnail-upload-section:hover {
+    border-color: #007bff;
+    background-color: #f0f8ff;
+}
+
+.thumbnail-upload-section.dragover {
+    border-color: #007bff;
+    background-color: #e7f3ff;
+    transform: scale(1.02);
+}
+
+.thumbnail-upload-section.dragover::before {
+    content: "Drop image here";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #007bff;
+    color: white;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10;
+}
+
+.thumbnail-upload-section.dragover > * {
+    opacity: 0.3;
+}
+
+.thumbnail-preview {
+    position: relative;
+    display: inline-block;
+    max-width: 200px;
+}
+
+.thumbnail-image {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 2px solid #ddd;
+}
+
+.thumbnail-remove-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 25px;
+    height: 25px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.thumbnail-remove-btn:hover {
+    background: #c82333;
+}
+
+.color-remove-image {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    background: #dc3545;
+    color: white;
     border: none;
     border-radius: 50%;
     width: 20px;
@@ -255,8 +356,13 @@ if (isset($_SESSION['form_data'])) {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     font-size: 12px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.color-remove-image:hover {
+    background: #c82333;
 }
 
 .color-preview {
@@ -543,6 +649,51 @@ if (isset($_SESSION['form_data'])) {
             </div>
         </div>
 
+        <!-- Product Thumbnails Section -->
+        <div class="form-section">
+            <h5 class="form-section-title">Product Thumbnails</h5>
+            <p class="text-muted mb-3">Upload thumbnail images for your product. These will be displayed on the product listing page.</p>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="primary_thumbnail" class="form-label">Primary Thumbnail <span class="required">*</span></label>
+                        <div class="thumbnail-upload-section" onclick="document.getElementById('primary_thumbnail').click();" style="<?php echo !empty($form_data['primary_thumbnail']) ? 'display: none;' : ''; ?>">
+                            <iconify-icon icon="solar:camera-add-linear" style="font-size: 32px; color: #6c757d;"></iconify-icon>
+                            <p class="mb-0 mt-2">Click to upload or drag & drop primary thumbnail</p>
+                            <small class="text-muted">This will be the main image displayed on product listings</small>
+                        </div>
+                        <input type="file" class="form-control" id="primary_thumbnail" name="primary_thumbnail" accept="image/*" style="display: none;" onchange="handleThumbnailUpload(this, 'primary')">
+                        <div id="primary_thumbnail_preview" class="thumbnail-preview mt-2" style="<?php echo !empty($form_data['primary_thumbnail']) ? 'display: block;' : 'display: none;'; ?>">
+                            <img id="primary_thumbnail_image" class="thumbnail-image" alt="Primary thumbnail preview" src="<?php echo !empty($form_data['primary_thumbnail']) ? '../store/' . htmlspecialchars($form_data['primary_thumbnail']) : ''; ?>">
+                            <button type="button" class="thumbnail-remove-btn" onclick="removeThumbnailPreview('primary')">×</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="secondary_thumbnail" class="form-label">
+                            Secondary Thumbnail 
+                            <span class="badge bg-info ms-2" data-bs-toggle="tooltip" data-bs-placement="top" title="This image will be shown when users hover over the primary image on the product page">
+                                <iconify-icon icon="solar:question-circle-linear"></iconify-icon>
+                            </span>
+                        </label>
+                        <div class="thumbnail-upload-section" onclick="document.getElementById('secondary_thumbnail').click();" style="<?php echo !empty($form_data['secondary_thumbnail']) ? 'display: none;' : ''; ?>">
+                            <iconify-icon icon="solar:camera-add-linear" style="font-size: 32px; color: #6c757d;"></iconify-icon>
+                            <p class="mb-0 mt-2">Click to upload or drag & drop secondary thumbnail</p>
+                            <small class="text-muted">Optional: Shown on hover in product page</small>
+                        </div>
+                        <input type="file" class="form-control" id="secondary_thumbnail" name="secondary_thumbnail" accept="image/*" style="display: none;" onchange="handleThumbnailUpload(this, 'secondary')">
+                        <div id="secondary_thumbnail_preview" class="thumbnail-preview mt-2" style="<?php echo !empty($form_data['secondary_thumbnail']) ? 'display: block;' : 'display: none;'; ?>">
+                            <img id="secondary_thumbnail_image" class="thumbnail-image" alt="Secondary thumbnail preview" src="<?php echo !empty($form_data['secondary_thumbnail']) ? '../store/' . htmlspecialchars($form_data['secondary_thumbnail']) : ''; ?>">
+                            <button type="button" class="thumbnail-remove-btn" onclick="removeThumbnailPreview('secondary')">×</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Categories Section -->
         <div class="form-section">
             <div class="d-flex justify-content-between align-items-center mb-3">
@@ -739,12 +890,81 @@ document.addEventListener('DOMContentLoaded', function() {
         addDragAndDropListeners(section);
     });
     
+    // Add drag and drop event listeners to thumbnail sections
+    const thumbnailSections = document.querySelectorAll('.thumbnail-upload-section');
+    thumbnailSections.forEach(section => {
+        addThumbnailDragAndDropListeners(section);
+    });
+    
     // Initialize slug generation
     initSlugGeneration();
     
     // Initialize Quill for Full Description
     initQuill();
+    
+    // Initialize tooltips for thumbnail section
+    initTooltips();
 });
+
+// Initialize tooltips
+function initTooltips() {
+    if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+    }
+}
+
+// Handle thumbnail upload
+function handleThumbnailUpload(input, type) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+        alert('Please select a valid image file');
+        input.value = '';
+        return;
+    }
+    
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+        alert('File size must be less than 5MB');
+        input.value = '';
+        return;
+    }
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        const preview = document.getElementById(type + '_thumbnail_preview');
+        const image = document.getElementById(type + '_thumbnail_image');
+        
+        image.src = e.target.result;
+        preview.style.display = 'block';
+        
+        // Hide upload section
+        const uploadSection = input.parentElement.querySelector('.thumbnail-upload-section');
+        uploadSection.style.display = 'none';
+    };
+    
+    reader.readAsDataURL(file);
+}
+
+// Remove thumbnail preview
+function removeThumbnailPreview(type) {
+    const preview = document.getElementById(type + '_thumbnail_preview');
+    const input = document.getElementById(type + '_thumbnail');
+    const uploadSection = input.parentElement.querySelector('.thumbnail-upload-section');
+    
+    // Clear input and hide preview
+    input.value = '';
+    preview.style.display = 'none';
+    
+    // Show upload section
+    uploadSection.style.display = 'flex';
+}
 
 // Slug generation functionality
 function initSlugGeneration() {
@@ -869,6 +1089,27 @@ function addDragAndDropListeners(imageSection) {
     imageSection.addEventListener('drop', handleDrop, false);
 }
 
+// Add drag and drop event listeners to thumbnail sections
+function addThumbnailDragAndDropListeners(thumbnailSection) {
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        thumbnailSection.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    // Highlight drop area when item is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        thumbnailSection.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        thumbnailSection.addEventListener(eventName, unhighlight, false);
+    });
+    
+    // Handle dropped files
+    thumbnailSection.addEventListener('drop', handleThumbnailDrop, false);
+}
+
 function preventDefaults(e) {
     e.preventDefault();
     e.stopPropagation();
@@ -908,6 +1149,34 @@ function handleDrop(e) {
             // Trigger the change event to handle the upload
             const changeEvent = new Event('change', { bubbles: true });
             fileInput.dispatchEvent(changeEvent);
+        }
+    }
+}
+
+function handleThumbnailDrop(e) {
+    const dt = e.dataTransfer;
+    const files = dt.files;
+    
+    // Determine thumbnail type based on the parent element
+    const thumbnailType = e.currentTarget.parentElement.querySelector('input[type="file"]').id.includes('primary') ? 'primary' : 'secondary';
+    
+    if (files.length > 0) {
+        // Filter only image files and take the first one
+        const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+        
+        if (imageFiles.length > 0) {
+            const file = imageFiles[0]; // Only take the first image for thumbnails
+            
+            // Create a FileList-like object for the input
+            const fileInput = document.getElementById(thumbnailType + '_thumbnail');
+            
+            // Create a new FileList
+            const dataTransfer = new DataTransfer();
+            dataTransfer.items.add(file);
+            fileInput.files = dataTransfer.files;
+            
+            // Trigger the change event to update the preview
+            fileInput.dispatchEvent(new Event('change'));
         }
     }
 }
@@ -1127,6 +1396,15 @@ document.getElementById('addProductForm').addEventListener('submit', function(e)
     if (categories.length === 0) {
         e.preventDefault();
         alert('Please select at least one category');
+        return;
+    }
+    
+    // Check if primary thumbnail is uploaded (for new products)
+    const editMode = document.querySelector('input[name="edit_mode"]');
+    const primaryThumbnail = document.getElementById('primary_thumbnail');
+    if (!editMode && primaryThumbnail && !primaryThumbnail.files[0]) {
+        e.preventDefault();
+        alert('Please upload a primary thumbnail image');
         return;
     }
 });

@@ -116,6 +116,59 @@ function sanitizeFilename($filename) {
     return strtolower($filename);
 }
 
+// Function to upload thumbnail image
+function uploadThumbnail($file, $productId, $type) {
+    $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    $maxFileSize = 5 * 1024 * 1024; // 5MB
+    
+    // Check for upload errors
+    if ($file['error'] !== UPLOAD_ERR_OK) {
+        $errorMessages = [
+            UPLOAD_ERR_INI_SIZE => 'File size exceeds server limit',
+            UPLOAD_ERR_FORM_SIZE => 'File size exceeds form limit',
+            UPLOAD_ERR_PARTIAL => 'File was only partially uploaded',
+            UPLOAD_ERR_NO_FILE => 'No file was uploaded',
+            UPLOAD_ERR_NO_TMP_DIR => 'Missing temporary folder',
+            UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+            UPLOAD_ERR_EXTENSION => 'File upload stopped by extension'
+        ];
+        
+        $errorMessage = $errorMessages[$file['error']] ?? 'Unknown upload error';
+        return ['success' => false, 'message' => $errorMessage];
+    }
+    
+    // Validate file type
+    if (!in_array($file['type'], $allowedTypes)) {
+        return ['success' => false, 'message' => 'Invalid file type. Only JPEG, PNG, GIF, and WebP are allowed.'];
+    }
+    
+    // Validate file size
+    if ($file['size'] > $maxFileSize) {
+        return ['success' => false, 'message' => 'File size too large. Maximum 5MB allowed.'];
+    }
+    
+    // Create thumbnails directory structure
+    $thumbnailDir = '../store/images/thumbnails/' . $productId;
+    if (!is_dir($thumbnailDir)) {
+        if (!mkdir($thumbnailDir, 0755, true)) {
+            return ['success' => false, 'message' => 'Failed to create thumbnail directory'];
+        }
+    }
+    
+    // Generate filename with type prefix
+    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $filename = $type . '_' . time() . '.' . $extension;
+    $targetPath = $thumbnailDir . '/' . $filename;
+    
+    // Move uploaded file
+    if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+        $relativePath = 'images/thumbnails/' . $productId . '/' . $filename;
+        return ['success' => true, 'filename' => $filename, 'path' => $relativePath];
+    } else {
+        return ['success' => false, 'message' => 'Failed to move uploaded file'];
+    }
+}
+
 try {
     // Check if we're in edit mode
     $edit_mode = isset($_POST['edit_mode']) && $_POST['edit_mode'] == '1';
@@ -150,6 +203,11 @@ try {
     
     if (!isset($_POST['categories']) || empty($_POST['categories'])) {
         throw new Exception('Please select at least one category.');
+    }
+    
+    // Validate primary thumbnail (mandatory for new products)
+    if (!$edit_mode && (!isset($_FILES['primary_thumbnail']) || $_FILES['primary_thumbnail']['error'] === UPLOAD_ERR_NO_FILE)) {
+        throw new Exception('Primary thumbnail is required.');
     }
     
     // Sanitize input data
@@ -507,6 +565,74 @@ try {
                     }
                 }
             }
+        }
+    }
+    
+    // Handle product thumbnails
+    $primaryThumbnailPath = null;
+    $secondaryThumbnailPath = null;
+    
+    // Process primary thumbnail
+    if (isset($_FILES['primary_thumbnail']) && $_FILES['primary_thumbnail']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $primaryResult = uploadThumbnail($_FILES['primary_thumbnail'], $product_id, 'primary');
+        if ($primaryResult['success']) {
+            $primaryThumbnailPath = $primaryResult['path'];
+        } else {
+            throw new Exception('Primary thumbnail upload failed: ' . $primaryResult['message']);
+        }
+    }
+    
+    // Process secondary thumbnail (optional)
+    if (isset($_FILES['secondary_thumbnail']) && $_FILES['secondary_thumbnail']['error'] !== UPLOAD_ERR_NO_FILE) {
+        $secondaryResult = uploadThumbnail($_FILES['secondary_thumbnail'], $product_id, 'secondary');
+        if ($secondaryResult['success']) {
+            $secondaryThumbnailPath = $secondaryResult['path'];
+        } else {
+            throw new Exception('Secondary thumbnail upload failed: ' . $secondaryResult['message']);
+        }
+    }
+    
+    // Save thumbnail information to database
+    if ($primaryThumbnailPath || $secondaryThumbnailPath) {
+        if ($edit_mode) {
+            // Check if thumbnail record exists
+            $checkThumbnailQuery = "SELECT id FROM product_thumbnails WHERE product_id = ?";
+            $checkThumbnailStmt = $db->prepare($checkThumbnailQuery);
+            $checkThumbnailStmt->execute([$product_id]);
+            $existingThumbnail = $checkThumbnailStmt->fetch();
+            
+            if ($existingThumbnail) {
+                // Update existing thumbnail record
+                $updateFields = [];
+                $updateValues = [];
+                
+                if ($primaryThumbnailPath) {
+                    $updateFields[] = "primary_image = ?";
+                    $updateValues[] = $primaryThumbnailPath;
+                }
+                
+                if ($secondaryThumbnailPath) {
+                    $updateFields[] = "secondary_image = ?";
+                    $updateValues[] = $secondaryThumbnailPath;
+                }
+                
+                if (!empty($updateFields)) {
+                    $updateValues[] = $product_id;
+                    $updateQuery = "UPDATE product_thumbnails SET " . implode(', ', $updateFields) . " WHERE product_id = ?";
+                    $updateStmt = $db->prepare($updateQuery);
+                    $updateStmt->execute($updateValues);
+                }
+            } else {
+                // Insert new thumbnail record
+                $insertThumbnailQuery = "INSERT INTO product_thumbnails (product_id, primary_image, secondary_image) VALUES (?, ?, ?)";
+                $insertThumbnailStmt = $db->prepare($insertThumbnailQuery);
+                $insertThumbnailStmt->execute([$product_id, $primaryThumbnailPath, $secondaryThumbnailPath]);
+            }
+        } else {
+            // Insert new thumbnail record for new product
+            $insertThumbnailQuery = "INSERT INTO product_thumbnails (product_id, primary_image, secondary_image) VALUES (?, ?, ?)";
+            $insertThumbnailStmt = $db->prepare($insertThumbnailQuery);
+            $insertThumbnailStmt->execute([$product_id, $primaryThumbnailPath, $secondaryThumbnailPath]);
         }
     }
     
