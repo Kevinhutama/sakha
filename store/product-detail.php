@@ -1,4 +1,7 @@
 <?php
+// Initialize session
+require_once 'includes/session-config.php';
+
 // Product Detail Page with Database Integration
 require_once '../admin/includes/config.php';
 
@@ -191,6 +194,7 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
     <link rel="stylesheet" type="text/css" href="css/vendor.css">
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -926,7 +930,7 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        padding: 20px 25px;
+        padding: 20px 25px 0;
         border-bottom: 0px;
         background-color: #fff;
     }

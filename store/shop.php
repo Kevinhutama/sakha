@@ -1,4 +1,7 @@
 <?php
+// Initialize session
+require_once 'includes/session-config.php';
+
 // Shop page with database integration
 require_once '../admin/includes/config.php';
 
@@ -163,6 +166,7 @@ function buildSortOrder($sortBy) {
     <link rel="stylesheet" type="text/css" href="css/vendor.css">
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

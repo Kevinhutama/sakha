@@ -1,4 +1,7 @@
 <?php
+// Initialize session
+require_once 'includes/session-config.php';
+
 // Database configuration - adjust these values according to your setup
 $host = 'localhost';
 $dbname = 'admin_portal';
@@ -42,6 +45,7 @@ function getImagePath($image, $isMobile = false) {
     <link rel="stylesheet" type="text/css" href="css/vendor.css">
     <link rel="stylesheet" type="text/css" href="css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

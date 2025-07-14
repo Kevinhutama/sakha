@@ -1,5 +1,6 @@
 <?php
-session_start();
+// Initialize session
+require_once 'includes/session-config.php';
 
 // Include centralized authentication configuration
 require_once __DIR__ . '/config/auth-config.php';
@@ -87,6 +88,10 @@ function handleGoogleLogin() {
     
     // Set session
     setUserSession($user_id, $google_user_info['email'], $google_user_info['name'], $google_user_info['picture'], 'google');
+    
+    // Force session write to ensure it's saved
+    session_write_close();
+    session_start();
     
     echo json_encode([
         'success' => true, 
@@ -187,6 +192,10 @@ function handleRegularLogin() {
             setcookie('remember_token', $token, time() + REMEMBER_TOKEN_LIFETIME, '/');
         }
         
+        // Force session write to ensure it's saved
+        session_write_close();
+        session_start();
+        
         echo json_encode([
             'success' => true, 
             'message' => 'Login successful',
@@ -240,10 +249,13 @@ function setUserSession($user_id, $email, $name, $avatar, $login_type) {
     $_SESSION['login_time'] = time();
     
     // Set session lifetime
-    if (SESSION_LIFETIME > 0) {
+    if (defined('SESSION_LIFETIME') && SESSION_LIFETIME > 0) {
         ini_set('session.gc_maxlifetime', SESSION_LIFETIME);
         session_set_cookie_params(SESSION_LIFETIME);
     }
+    
+    // Regenerate session ID for security
+    session_regenerate_id(true);
 }
 
 function verifyGoogleToken($id_token, $client_id) {

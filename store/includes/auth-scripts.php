@@ -203,12 +203,9 @@
     }
 
     function updateUIAfterLogin(user) {
-        // Update the Account link to show user name
-        const accountLink = $('.nav-link[data-bs-target="#loginModal"]');
-        accountLink.text(user.name || user.email);
-        
-        // You can add more UI updates here
-        // For example, show user avatar, update cart, etc.
+        // This function is for UI updates without page reload
+        // Used when checking existing login status, not for new logins
+        console.log('User is logged in:', user.name || user.email);
     }
 
     function checkUserStatus() {

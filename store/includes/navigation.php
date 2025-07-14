@@ -1,3 +1,12 @@
+<?php
+// Check if user is logged in
+// Session should already be started by the parent page
+
+$isLoggedIn = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+$userName = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
+$userAvatar = isset($_SESSION['user_avatar']) ? $_SESSION['user_avatar'] : '';
+?>
+
 <header id="header" class="site-header">
   <nav id="header-nav" class="navbar navbar-expand-lg px-3">
     <div class="container">
@@ -17,43 +26,11 @@
             
             <ul class="list-unstyled d-lg-flex justify-content-md-between align-items-center">
               <li class="nav-item">
-                <a class="nav-link ms-0" href="about.html">About</a>
+                <a class="nav-link ms-0" href="index.php">Home</a>
               </li>
-                              <li class="nav-item">
-                  <a class="nav-link ms-0" href="shop.php">Shop</a>
-                </li>
-              <li class="nav-item dropdown">
-                <a class="nav-link dropdown-toggle ms-0" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Products<svg class="bi" width="18" height="18"><use xlink:href="#chevron-down"></use></svg></a>
-                <ul class="dropdown-menu">
-                  <li>
-                    <a href="about.html" class="dropdown-item fs-5 fw-medium">About <span class="text-primary">(PRO)</span></a>
-                  </li>
-                  <li>
-                    <a href="shop.php" class="dropdown-item fs-5 fw-medium">Shop <span class="text-primary">(PRO)</span></a>
-                  </li>
-                  <li>
-                    <a href="single-product.html" class="dropdown-item fs-5 fw-medium">Single Product <span class="text-primary">(PRO)</span></a>
-                  </li>
-                  <li>
-                    <a href="login.html" class="dropdown-item fs-5 fw-medium">Account <span class="text-primary">(PRO)</span></a>
-                  </li>
-                  <li>
-                    <a href="cart.html" class="dropdown-item fs-5 fw-medium">Cart <span class="text-primary">(PRO)</span></a>
-                  </li>
-                  <li>
-                    <a href="checkout.php" class="dropdown-item fs-5 fw-medium">Checkout <span class="text-primary">(PRO)</span></a>
-                  </li>
-                  <li>
-                    <a href="blog.html" class="dropdown-item fs-5 fw-medium">Blog <span class="text-primary">(PRO)</span></a>
-                  </li>
-                  <li>
-                    <a href="single-post.html" class="dropdown-item fs-5 fw-medium">Single Post <span class="text-primary">(PRO)</span></a>
-                  </li>
-                  <li>
-                    <a href="contact.html" class="dropdown-item fs-5 fw-medium">Contact <span class="text-primary">(PRO)</span></a>
-                  </li>
-                </ul>
-              </li>                  
+              <li class="nav-item">
+                <a class="nav-link ms-0" href="shop.php">Shop</a>
+              </li>
             </ul>
             
             <a class="navbar-brand d-none d-lg-block me-0" href="index.php">
@@ -69,50 +46,146 @@
                   </form>
                 </div>
               </li>
-              <li class="nav-item">
-                <a class="nav-link me-0" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Account</a>
-              </li>
-              <li class="cart-dropdown nav-item dropdown">
-                <a class="nav-link dropdown-toggle me-0" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false">Cart(2)</a>
-                <div class="dropdown-menu dropdown-menu-end p-3">
-                  <h4 class="d-flex justify-content-between align-items-center mb-3">
-                    <span class="text-primary">Your cart</span>
-                    <span class="badge bg-primary rounded-pill">2</span>
-                  </h4>
-                  <ul class="list-group mb-3">
-                    <li class="list-group-item bg-transparent border-dark d-flex justify-content-between lh-sm">
-                      <div>
-                        <h5 class="card-title fs-3 text-capitalize">
-                          <a href="single-product.html">Red Sajadah</a>
-                        </h5>
-                        <small class="text-body-secondary">Soft texture matt coated.</small>
-                      </div>
-                      <span class="text-primary">$120</span>
-                    </li>
-                    <li class="list-group-item bg-transparent border-dark d-flex justify-content-between lh-sm">
-                      <div>
-                        <h5 class="card-title fs-3 text-capitalize">
-                          <a href="single-product.html">Shiny Pot</a>
-                        </h5>
-                        <small class="text-body-secondary">This pot is ceramic.</small>
-                      </div>
-                      <span class="text-primary">$870</span>
-                    </li>
-                    <li class="list-group-item bg-transparent border-dark d-flex justify-content-between">
-                      <span class="text-uppercase"><b>Total (USD)</b></span>
-                      <strong>$990</strong>
-                    </li>
+              
+              <?php if ($isLoggedIn): ?>
+                <!-- User is logged in - show user profile and logout -->
+                <li class="nav-item dropdown">
+                  <a class="nav-link dropdown-toggle me-0 user-profile-link" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-user" style="font-size: 18px;"></i>
+                    <?php if ($userName): ?>
+                      <span class="d-none d-lg-inline ms-1"><?php echo htmlspecialchars($userName); ?></span>
+                    <?php endif; ?>
+                  </a>
+                  <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="profile.php"><i class="fas fa-user-circle me-2"></i>Profile</a></li>
+                    <li><a class="dropdown-item" href="orders.php"><i class="fas fa-shopping-bag me-2"></i>My Orders</a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" onclick="logout(); return false;"><i class="fas fa-sign-out-alt me-2"></i>Logout</a></li>
                   </ul>
-                  <div class="d-flex flex-wrap justify-content-center">
-                    <a class="w-100 btn btn-dark mb-1" type="submit">View Cart</a>
-                    <a class="w-100 btn btn-primary" href="checkout.php">Go to checkout</a>
+                </li>
+              <?php else: ?>
+                <!-- User is not logged in - show login button -->
+                <li class="nav-item">
+                  <a class="nav-link me-0" href="#" data-bs-toggle="modal" data-bs-target="#loginModal" title="Login">
+                    <i class="fas fa-sign-in-alt" style="font-size: 18px;"></i>
+                    <span class="d-none d-lg-inline ms-1">Login</span>
+                  </a>
+                </li>
+              <?php endif; ?>
+              
+              <?php if ($isLoggedIn): ?>
+                <!-- User is logged in - show cart -->
+                <li class="cart-dropdown nav-item dropdown">
+                  <a class="nav-link dropdown-toggle me-0" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false" title="Cart">
+                    <i class="fas fa-shopping-cart" style="font-size: 18px;"></i>
+                    <span class="cart-count badge bg-primary rounded-pill ms-1">2</span>
+                  </a>
+                  <div class="dropdown-menu dropdown-menu-end p-3">
+                    <h4 class="d-flex justify-content-between align-items-center mb-3">
+                      <span class="text-primary">Your cart</span>
+                      <span class="badge bg-primary rounded-pill">2</span>
+                    </h4>
+                    <ul class="list-group mb-3">
+                      <li class="list-group-item bg-transparent border-dark d-flex justify-content-between lh-sm">
+                        <div>
+                          <h5 class="card-title fs-3 text-capitalize">
+                            <a href="single-product.html">Red Sajadah</a>
+                          </h5>
+                          <small class="text-body-secondary">Soft texture matt coated.</small>
+                        </div>
+                        <span class="text-primary">$120</span>
+                      </li>
+                      <li class="list-group-item bg-transparent border-dark d-flex justify-content-between lh-sm">
+                        <div>
+                          <h5 class="card-title fs-3 text-capitalize">
+                            <a href="single-product.html">Shiny Pot</a>
+                          </h5>
+                          <small class="text-body-secondary">This pot is ceramic.</small>
+                        </div>
+                        <span class="text-primary">$870</span>
+                      </li>
+                      <li class="list-group-item bg-transparent border-dark d-flex justify-content-between">
+                        <span class="text-uppercase"><b>Total (USD)</b></span>
+                        <strong>$990</strong>
+                      </li>
+                    </ul>
+                    <div class="d-flex flex-wrap justify-content-center">
+                      <a class="w-100 btn btn-dark mb-1" href="cart.php">View Cart</a>
+                      <a class="w-100 btn btn-primary" href="checkout.php">Go to checkout</a>
+                    </div>
                   </div>
-                </div>
-              </li>
+                </li>
+              <?php endif; ?>
             </ul>
           </ul>
         </div>
       </div>
     </div>
   </nav>
-</header> 
+</header>
+
+<style>
+.user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #dee2e6;
+}
+
+.user-profile-link {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.user-profile-link:hover {
+  text-decoration: none;
+}
+
+.cart-count {
+  font-size: 11px;
+  min-width: 18px;
+  height: 18px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.nav-link:hover {
+  color: #333 !important;
+  transform: translateY(-1px);
+}
+
+.dropdown-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  transition: all 0.3s ease;
+}
+
+.dropdown-item:hover {
+  background-color: #f8f9fa;
+  transform: translateX(5px);
+}
+
+.dropdown-menu {
+  border: none;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+@media (max-width: 991px) {
+  .nav-link span {
+    display: inline !important;
+    margin-left: 8px;
+  }
+}
+</style> 
