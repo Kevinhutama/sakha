@@ -220,6 +220,16 @@ function buildSortOrder($sortBy) {
         transition: opacity 0s;
       }
       
+      /* Clickable image styling */
+      .clickable-image {
+        cursor: pointer;
+        transition: transform 0.3s ease;
+      }
+      
+      .clickable-image:hover {
+        transform: scale(1.02);
+      }
+      
       /* Price Range Slider Styles */
       .price-range-slider {
         padding: 10px 0;
@@ -337,6 +347,18 @@ function buildSortOrder($sortBy) {
       .clear-filters {
         font-size: 11px;
         padding: 2px 8px;
+        text-decoration: none;
+        color: #6c757d;
+        border: 1px solid #6c757d;
+        background-color: transparent;
+        transition: all 0.3s ease;
+      }
+      
+      .clear-filters:hover {
+        color: #495057;
+        border-color: #495057;
+        background-color: #f8f9fa;
+        text-decoration: none;
       }
       
       /* Enhanced Sort dropdown styling */
@@ -559,14 +581,9 @@ function buildSortOrder($sortBy) {
                     <?php if (!empty($product['secondary_image'])): ?>
                       <!-- Product with both primary and secondary images -->
                       <div class="product-card mb-3 position-relative">
-                        <div class="image-holder">
+                        <div class="image-holder clickable-image" onclick="window.location.href='product-detail.php?slug=<?php echo urlencode($product['slug']); ?>'">
                           <img src="<?php echo htmlspecialchars(getProductImage($product['primary_image'])); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-fluid primary-image">
                           <img src="<?php echo htmlspecialchars(getProductImage($product['secondary_image'])); ?>" alt="<?php echo htmlspecialchars($product['name']); ?> Secondary" class="img-fluid secondary-image">
-                          <div class="cart-concern position-absolute">
-                            <div class="cart-button">
-                              <a href="#" class="btn">Add to Cart</a>
-                            </div>
-                          </div>
                         </div>
                         <div class="card-detail text-center pt-3 pb-2">
                           <h5 class="card-title fs-3 text-capitalize">
@@ -585,13 +602,8 @@ function buildSortOrder($sortBy) {
                     <?php else: ?>
                       <!-- Product with only primary image -->
                       <div class="product-card position-relative mb-3">
-                        <div class="image-holder zoom-effect">
+                        <div class="image-holder zoom-effect clickable-image" onclick="window.location.href='product-detail.php?slug=<?php echo urlencode($product['slug']); ?>'">
                           <img src="<?php echo htmlspecialchars(getProductImage($product['primary_image'])); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-fluid zoom-in">
-                          <div class="cart-concern position-absolute">
-                            <div class="cart-button">
-                              <a href="#" class="btn">Add to Cart</a>
-                            </div>
-                          </div>
                         </div>
                         <div class="card-detail text-center pt-3 pb-2">
                           <h5 class="card-title fs-3 text-capitalize">
