@@ -1,6 +1,71 @@
 <?php
-// No special database functionality needed for shop page
-// This is a simple conversion from shop.html to shop.php with proper includes
+// Shop page with database integration
+require_once '../admin/includes/config.php';
+
+// Get database connection
+$database = new Database();
+$db = $database->getConnection();
+
+// Initialize variables
+$products = [];
+$totalProducts = 0;
+$currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
+$productsPerPage = 5;
+$totalPages = 0;
+$startResult = 0;
+$endResult = 0;
+
+try {
+    // Get total count of active products
+    $countQuery = "SELECT COUNT(*) as total FROM products WHERE status = 'active'";
+    $countStmt = $db->prepare($countQuery);
+    $countStmt->execute();
+    $totalProducts = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
+    
+    // Calculate pagination values
+    $totalPages = ceil($totalProducts / $productsPerPage);
+    $offset = ($currentPage - 1) * $productsPerPage;
+    $startResult = $offset + 1;
+    $endResult = min($offset + $productsPerPage, $totalProducts);
+    
+    // Query to get products with thumbnails with pagination
+    $query = "SELECT p.*, pt.primary_image, pt.secondary_image 
+              FROM products p 
+              LEFT JOIN product_thumbnails pt ON p.id = pt.product_id 
+              WHERE p.status = 'active' 
+              ORDER BY p.created_at DESC
+              LIMIT $productsPerPage OFFSET $offset";
+    
+    $stmt = $db->prepare($query);
+    $stmt->execute();
+    $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+} catch (PDOException $e) {
+    error_log("Shop page error: " . $e->getMessage());
+    $products = [];
+    $totalProducts = 0;
+    $totalPages = 0;
+}
+
+// Function to format price
+function formatPrice($price) {
+    return 'RP ' . number_format($price, 0, ',', '.');
+}
+
+// Function to get product image or default
+function getProductImage($imagePath) {
+    if (empty($imagePath)) {
+        return 'images/products/default-product.jpg';
+    }
+    return $imagePath;
+}
+
+// Function to build pagination URLs
+function buildPaginationUrl($page) {
+    $params = $_GET;
+    $params['page'] = $page;
+    return '?' . http_build_query($params);
+}
 ?>
 <!DOCTYPE html>
 <html>
@@ -111,7 +176,11 @@
           <main class="col-md-9">
             <div class="filter-shop d-flex flex-wrap justify-content-between">
               <div class="showing-product">
-                <p>Showing 1-9 of 55 results</p>
+                <?php if ($totalProducts > 0): ?>
+                  <p>Showing <?php echo $startResult; ?>-<?php echo $endResult; ?> of <?php echo $totalProducts; ?> results</p>
+                <?php else: ?>
+                  <p>No products found</p>
+                <?php endif; ?>
               </div>
               <div class="sort-by">
                 <select id="input-sort" class="form-control" data-filter-sort="" data-filter-order="">
@@ -128,211 +197,117 @@
               </div>
             </div>
             <div class="row product-content product-store">
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card mb-3 position-relative">
-                  <div class="image-holder">
-                    <img src="images/products/blossom - 1.webp" alt="Blossom Prayer Collection" class="img-fluid primary-image">
-                    <img src="images/products/bolossom - 2.webp" alt="Blossom Prayer Collection Secondary" class="img-fluid secondary-image">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
+              <?php if (!empty($products)): ?>
+                <?php foreach ($products as $product): ?>
+                  <div class="col-lg-4 col-md-6">
+                    <?php if (!empty($product['secondary_image'])): ?>
+                      <!-- Product with both primary and secondary images -->
+                      <div class="product-card mb-3 position-relative">
+                        <div class="image-holder">
+                          <img src="<?php echo htmlspecialchars(getProductImage($product['primary_image'])); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-fluid primary-image">
+                          <img src="<?php echo htmlspecialchars(getProductImage($product['secondary_image'])); ?>" alt="<?php echo htmlspecialchars($product['name']); ?> Secondary" class="img-fluid secondary-image">
+                          <div class="cart-concern position-absolute">
+                            <div class="cart-button">
+                              <a href="#" class="btn">Add to Cart</a>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="card-detail text-center pt-3 pb-2">
+                          <h5 class="card-title fs-3 text-capitalize">
+                            <a href="product-detail.php?id=<?php echo $product['id']; ?>"><?php echo htmlspecialchars($product['name']); ?></a>
+                          </h5>
+                          <span class="item-price text-primary fs-3 fw-light">
+                            <?php if ($product['discounted_price'] && $product['discounted_price'] < $product['price']): ?>
+                              <?php echo formatPrice($product['discounted_price']); ?>
+                              <del class="text-muted ms-2"><?php echo formatPrice($product['price']); ?></del>
+                            <?php else: ?>
+                              <?php echo formatPrice($product['price']); ?>
+                            <?php endif; ?>
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="single-product.html">Blossom Prayer Collection</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 100,000</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card mb-3 position-relative">
-                  <div class="image-holder">
-                    <img src="images/products/premium - 1.webp" alt="Premium Prayer Mat" class="img-fluid primary-image">
-                    <img src="images/products/premium - 2.webp" alt="Premium Prayer Mat Secondary" class="img-fluid secondary-image">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
+                    <?php else: ?>
+                      <!-- Product with only primary image -->
+                      <div class="product-card position-relative mb-3">
+                        <div class="image-holder zoom-effect">
+                          <img src="<?php echo htmlspecialchars(getProductImage($product['primary_image'])); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-fluid zoom-in">
+                          <div class="cart-concern position-absolute">
+                            <div class="cart-button">
+                              <a href="#" class="btn">Add to Cart</a>
+                            </div>
+                          </div>
+                        </div>
+                        <div class="card-detail text-center pt-3 pb-2">
+                          <h5 class="card-title fs-3 text-capitalize">
+                            <a href="product-detail.php?id=<?php echo $product['id']; ?>"><?php echo htmlspecialchars($product['name']); ?></a>
+                          </h5>
+                          <span class="item-price text-primary fs-3 fw-light">
+                            <?php if ($product['discounted_price'] && $product['discounted_price'] < $product['price']): ?>
+                              <?php echo formatPrice($product['discounted_price']); ?>
+                              <del class="text-muted ms-2"><?php echo formatPrice($product['price']); ?></del>
+                            <?php else: ?>
+                              <?php echo formatPrice($product['price']); ?>
+                            <?php endif; ?>
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    <?php endif; ?>
                   </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="single-product.html">Premium Prayer Mat</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 125,000</span>
-                  </div>
+                <?php endforeach; ?>
+              <?php else: ?>
+                <div class="col-12 text-center">
+                  <p>No products found.</p>
                 </div>
-              </div>
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card mb-3 position-relative">
-                  <div class="image-holder">
-                    <img src="images/products/bolossom - 2.webp" alt="Blossom Sajadah Set" class="img-fluid primary-image">
-                    <img src="images/products/blossom - 1.webp" alt="Blossom Sajadah Set Secondary" class="img-fluid secondary-image">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="single-product.html">Blossom Sajadah Set</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 115,000</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card mb-3 position-relative">
-                  <div class="image-holder">
-                    <img src="images/products/azhara - 1.webp" alt="Azhara Sacred Mat" class="img-fluid primary-image">
-                    <img src="images/products/premium - 1.webp" alt="Azhara Sacred Mat Secondary" class="img-fluid secondary-image">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="single-product.html">Azhara Sacred Mat</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 135,000</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card mb-3 position-relative">
-                  <div class="image-holder">
-                    <img src="images/products/premium - 2.webp" alt="Premium Black Mat" class="img-fluid primary-image">
-                    <img src="images/products/premium - 1.webp" alt="Premium Black Mat Secondary" class="img-fluid secondary-image">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="single-product.html">Premium Black Mat</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 150,000</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card mb-3 position-relative">
-                  <div class="image-holder">
-                    <img src="images/products/blossom - 1.webp" alt="Blossom Prayer Collection" class="img-fluid primary-image">
-                    <img src="images/products/bolossom - 2.webp" alt="Blossom Prayer Collection Secondary" class="img-fluid secondary-image">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="single-product.html">Blossom Prayer Collection</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 100,000</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card mb-3 position-relative">
-                  <div class="image-holder">
-                    <img src="images/products/bolossom - 2.webp" alt="Blossom Sajadah Set" class="img-fluid primary-image">
-                    <img src="images/products/blossom - 1.webp" alt="Blossom Sajadah Set Secondary" class="img-fluid secondary-image">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="single-product.html">Blossom Sajadah Set</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 115,000</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card mb-3 position-relative">
-                  <div class="image-holder">
-                    <img src="images/products/azhara - 1.webp" alt="Azhara Sacred Mat" class="img-fluid primary-image">
-                    <img src="images/products/premium - 2.webp" alt="Azhara Sacred Mat Secondary" class="img-fluid secondary-image">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="single-product.html">Azhara Sacred Mat</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 135,000</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card mb-3 position-relative">
-                  <div class="image-holder">
-                    <img src="images/products/premium - 2.webp" alt="Premium Black Mat" class="img-fluid primary-image">
-                    <img src="images/products/azhara - 1.webp" alt="Premium Black Mat Secondary" class="img-fluid secondary-image">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="single-product.html">Premium Black Mat</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 150,000</span>
-                  </div>
-                </div>
-              </div>
-              <div class="col-lg-4 col-md-6">
-                <div class="product-card position-relative mb-3">
-                  <div class="image-holder zoom-effect">
-                    <img src="images/product-item5.jpg" alt="product-item" class="img-fluid zoom-in">
-                    <div class="cart-concern position-absolute">
-                      <div class="cart-button">
-                        <a href="#" class="btn">Add to Cart</a>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="card-detail text-center pt-3 pb-2">
-                    <h5 class="card-title fs-3 text-capitalize">
-                      <a href="#">Shell Shape</a>
-                    </h5>
-                    <span class="item-price text-primary fs-3 fw-light">RP 110,000</span>
-                  </div>
-                </div>
-              </div>
+              <?php endif; ?>
             </div>
+            <?php if ($totalPages > 1): ?>
             <nav class="navigation paging-navigation text-center padding-medium" role="navigation">
               <div class="pagination loop-pagination d-flex justify-content-center align-items-center">
-                <a href="#" class="d-flex pe-2">
-                  <svg width="24" height="24"><use xlink:href="#angle-left"></use></svg>
-                </a>
-                <span aria-current="page" class="page-numbers current pe-3">1</span>
-                <a class="page-numbers pe-3" href="#">2</a>
-                <a class="page-numbers pe-3" href="#">3</a>
-                <a class="page-numbers pe-3" href="#">4</a>
-                <a class="page-numbers" href="#">5</a>
-                <a href="#" class="d-flex ps-2">
-                  <svg width="24" height="24"><use xlink:href="#angle-right"></use></svg>
-                </a>
+                <?php if ($currentPage > 1): ?>
+                  <a href="<?php echo buildPaginationUrl($currentPage - 1); ?>" class="d-flex pe-2">
+                    <svg width="24" height="24"><use xlink:href="#angle-left"></use></svg>
+                  </a>
+                <?php endif; ?>
+                
+                <?php
+                // Calculate page range to show
+                $startPage = max(1, $currentPage - 2);
+                $endPage = min($totalPages, $currentPage + 2);
+                
+                // Show first page if not in range
+                if ($startPage > 1) {
+                    echo '<a class="page-numbers pe-3" href="' . buildPaginationUrl(1) . '">1</a>';
+                    if ($startPage > 2) {
+                        echo '<span class="page-numbers pe-3">...</span>';
+                    }
+                }
+                
+                // Show page numbers in range
+                for ($i = $startPage; $i <= $endPage; $i++) {
+                    if ($i == $currentPage) {
+                        echo '<span aria-current="page" class="page-numbers current pe-3">' . $i . '</span>';
+                    } else {
+                        echo '<a class="page-numbers pe-3" href="' . buildPaginationUrl($i) . '">' . $i . '</a>';
+                    }
+                }
+                
+                // Show last page if not in range
+                if ($endPage < $totalPages) {
+                    if ($endPage < $totalPages - 1) {
+                        echo '<span class="page-numbers pe-3">...</span>';
+                    }
+                    echo '<a class="page-numbers pe-3" href="' . buildPaginationUrl($totalPages) . '">' . $totalPages . '</a>';
+                }
+                ?>
+                
+                <?php if ($currentPage < $totalPages): ?>
+                  <a href="<?php echo buildPaginationUrl($currentPage + 1); ?>" class="d-flex ps-2">
+                    <svg width="24" height="24"><use xlink:href="#angle-right"></use></svg>
+                  </a>
+                <?php endif; ?>
               </div>
             </nav>
+            <?php endif; ?>
           </main>
           <aside class="col-md-3">
             <div class="sidebar">
