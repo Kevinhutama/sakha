@@ -17,6 +17,21 @@ function generateUniqueFilename($originalName) {
     return uniqid() . '_' . time() . '.' . $extension;
 }
 
+// Function to generate slug from text
+function generateSlug($text) {
+    // Convert to lowercase and remove special characters
+    $slug = strtolower(trim($text));
+    
+    // Replace spaces, underscores, and multiple hyphens with single hyphen
+    $slug = preg_replace('/[^\w\s-]/', '', $slug);
+    $slug = preg_replace('/[\s_-]+/', '-', $slug);
+    
+    // Remove leading and trailing hyphens
+    $slug = trim($slug, '-');
+    
+    return $slug;
+}
+
 // Function to upload image
 function uploadImage($file, $targetDir) {
     $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
@@ -92,12 +107,17 @@ try {
         throw new Exception('Product name and price are required.');
     }
     
+    if (empty($_POST['slug'])) {
+        throw new Exception('Product slug is required.');
+    }
+    
     if (!isset($_POST['categories']) || empty($_POST['categories'])) {
         throw new Exception('Please select at least one category.');
     }
     
     // Sanitize input data
     $name = trim($_POST['name']);
+    $slug = generateSlug(trim($_POST['slug']));
     $description = trim($_POST['description']);
     $short_description = trim($_POST['short_description']);
     $price = floatval($_POST['price']);
@@ -109,6 +129,14 @@ try {
     $featured = isset($_POST['featured']) ? 1 : 0;
     $categories = $_POST['categories'];
     
+    // Validate slug uniqueness
+    $slugCheckQuery = "SELECT id FROM products WHERE slug = ?";
+    $slugCheckStmt = $db->prepare($slugCheckQuery);
+    $slugCheckStmt->execute([$slug]);
+    if ($slugCheckStmt->fetch()) {
+        throw new Exception('A product with this slug already exists. Please choose a different slug.');
+    }
+    
     // Validate price
     if ($price <= 0) {
         throw new Exception('Price must be greater than 0.');
@@ -119,13 +147,14 @@ try {
     }
     
     // Insert product
-    $query = "INSERT INTO products (name, description, short_description, price, discounted_price, 
+    $query = "INSERT INTO products (name, slug, description, short_description, price, discounted_price, 
               custom_name_enabled, pouch_custom_price, sajadah_custom_price, status, featured) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     
     $stmt = $db->prepare($query);
     $stmt->execute([
         $name,
+        $slug,
         $description,
         $short_description,
         $price,
@@ -285,6 +314,7 @@ try {
     // Store form data in session to repopulate form
     $_SESSION['form_data'] = [
         'name' => $_POST['name'] ?? '',
+        'slug' => $_POST['slug'] ?? '',
         'description' => $_POST['description'] ?? '',
         'short_description' => $_POST['short_description'] ?? '',
         'price' => $_POST['price'] ?? '',

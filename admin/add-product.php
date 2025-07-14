@@ -309,6 +309,21 @@ if (isset($_SESSION['form_data'])) {
                 </div>
                 <div class="col-md-6">
                     <div class="mb-3">
+                        <label for="slug" class="form-label">Slug <span class="required">*</span></label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="slug" name="slug" value="<?php echo htmlspecialchars($form_data['slug'] ?? ''); ?>" required readonly>
+                            <button type="button" class="btn btn-outline-secondary" id="editSlugBtn" onclick="toggleSlugEdit()">
+                                <iconify-icon icon="solar:pen-linear"></iconify-icon>
+                            </button>
+                        </div>
+                        <small class="text-muted">Auto-generated from product name. Click edit to customize.</small>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
                         <label for="price" class="form-label">Price <span class="required">*</span></label>
                         <div class="input-group">
                             <span class="input-group-text">Rp</span>
@@ -316,9 +331,6 @@ if (isset($_SESSION['form_data'])) {
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="discounted_price" class="form-label">Discounted Price</label>
@@ -328,6 +340,9 @@ if (isset($_SESSION['form_data'])) {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="status" class="form-label">Status</label>
@@ -335,15 +350,6 @@ if (isset($_SESSION['form_data'])) {
                             <option value="active" <?php echo ($form_data['status'] ?? 'active') === 'active' ? 'selected' : ''; ?>>Active</option>
                             <option value="inactive" <?php echo ($form_data['status'] ?? 'active') === 'inactive' ? 'selected' : ''; ?>>Inactive</option>
                         </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="short_description" class="form-label">Short Description</label>
-                        <textarea class="form-control" id="short_description" name="short_description" rows="3" placeholder="Brief description for product listing"><?php echo htmlspecialchars($form_data['short_description'] ?? ''); ?></textarea>
                     </div>
                 </div>
                 <div class="col-md-6">
@@ -359,9 +365,19 @@ if (isset($_SESSION['form_data'])) {
                 </div>
             </div>
 
-            <div class="mb-3">
-                <label for="description" class="form-label">Full Description</label>
-                <textarea class="form-control" id="description" name="description" rows="5" placeholder="Detailed product description"><?php echo htmlspecialchars($form_data['description'] ?? ''); ?></textarea>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="short_description" class="form-label">Short Description</label>
+                        <textarea class="form-control" id="short_description" name="short_description" rows="3" placeholder="Brief description for product listing"><?php echo htmlspecialchars($form_data['short_description'] ?? ''); ?></textarea>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Full Description</label>
+                        <textarea class="form-control" id="description" name="description" rows="5" placeholder="Detailed product description"><?php echo htmlspecialchars($form_data['description'] ?? ''); ?></textarea>
+                    </div>
+                </div>
             </div>
         </div>
 
@@ -556,7 +572,68 @@ document.addEventListener('DOMContentLoaded', function() {
     existingImageSections.forEach(section => {
         addDragAndDropListeners(section);
     });
+    
+    // Initialize slug generation
+    initSlugGeneration();
 });
+
+// Slug generation functionality
+function initSlugGeneration() {
+    const nameInput = document.getElementById('name');
+    const slugInput = document.getElementById('slug');
+    
+    // Auto-generate slug when typing product name
+    nameInput.addEventListener('input', function() {
+        if (slugInput.readOnly) {
+            const generatedSlug = generateSlug(this.value);
+            slugInput.value = generatedSlug;
+        }
+    });
+    
+    // Generate initial slug if name field has value
+    if (nameInput.value && slugInput.readOnly) {
+        slugInput.value = generateSlug(nameInput.value);
+    }
+}
+
+// Generate slug from text
+function generateSlug(text) {
+    return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '') // Remove special characters except spaces and hyphens
+        .replace(/[\s_-]+/g, '-') // Replace spaces and underscores with hyphens
+        .replace(/^-+|-+$/g, ''); // Remove leading/trailing hyphens
+}
+
+// Toggle slug editing
+function toggleSlugEdit() {
+    const slugInput = document.getElementById('slug');
+    const editBtn = document.getElementById('editSlugBtn');
+    
+    if (slugInput.readOnly) {
+        // Enable editing
+        slugInput.readOnly = false;
+        slugInput.focus();
+        editBtn.innerHTML = '<iconify-icon icon="solar:check-circle-linear"></iconify-icon>';
+        editBtn.className = 'btn btn-outline-success';
+        editBtn.title = 'Save slug';
+    } else {
+        // Disable editing and validate
+        const slugValue = slugInput.value.trim();
+        if (!slugValue) {
+            alert('Slug cannot be empty');
+            return;
+        }
+        
+        // Clean the slug
+        slugInput.value = generateSlug(slugValue);
+        slugInput.readOnly = true;
+        editBtn.innerHTML = '<iconify-icon icon="solar:pen-linear"></iconify-icon>';
+        editBtn.className = 'btn btn-outline-secondary';
+        editBtn.title = 'Edit slug';
+    }
+}
 
 // Add drag and drop event listeners to an image section
 function addDragAndDropListeners(imageSection) {
@@ -798,11 +875,26 @@ function removeColorImage(button) {
 // Form validation
 document.getElementById('addProductForm').addEventListener('submit', function(e) {
     const name = document.getElementById('name').value.trim();
+    const slug = document.getElementById('slug').value.trim();
     const price = document.getElementById('price').value;
     
     if (!name) {
         e.preventDefault();
         alert('Please enter a product name');
+        return;
+    }
+    
+    if (!slug) {
+        e.preventDefault();
+        alert('Please enter a product slug');
+        return;
+    }
+    
+    // Validate slug format
+    const slugPattern = /^[a-z0-9-]+$/;
+    if (!slugPattern.test(slug)) {
+        e.preventDefault();
+        alert('Slug can only contain lowercase letters, numbers, and hyphens');
         return;
     }
     
@@ -828,7 +920,9 @@ function generateDefaultValues() {
     }
     
     // Basic Information
-    document.getElementById('name').value = 'Sample Product ' + Math.floor(Math.random() * 1000);
+    const productName = 'Sample Product ' + Math.floor(Math.random() * 1000);
+    document.getElementById('name').value = productName;
+    document.getElementById('slug').value = generateSlug(productName);
     document.getElementById('price').value = '299000';
     document.getElementById('discounted_price').value = '249000';
     document.getElementById('short_description').value = 'High-quality product with excellent features and modern design.';

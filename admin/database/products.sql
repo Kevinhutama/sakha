@@ -40,6 +40,7 @@ CREATE TABLE categories (
 CREATE TABLE products (
     id INT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) UNIQUE NOT NULL,
     description TEXT,
     short_description TEXT,
     price DECIMAL(10,2) NOT NULL,
@@ -121,6 +122,7 @@ CREATE TABLE related_products (
 
 -- Indexes for better performance
 CREATE INDEX idx_products_status ON products(status);
+CREATE INDEX idx_products_slug ON products(slug);
 CREATE INDEX idx_product_colors_status ON product_colors(product_id, status);
 CREATE INDEX idx_product_images_primary ON product_images(product_id, is_primary);
 CREATE INDEX idx_categories_status ON categories(status);

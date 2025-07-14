@@ -11,18 +11,18 @@ INSERT INTO categories (name, description, slug, status) VALUES
 ('Travel Size', 'Compact prayer mats for travel', 'travel-size', 'active');
 
 -- Insert Products
-INSERT INTO products (name, description, short_description, price, discounted_price, custom_name_enabled, pouch_custom_price, sajadah_custom_price, status, featured) VALUES
-('Blossom Prayer Collection', 'Beautiful handcrafted prayer mat made with premium materials. Perfect for daily prayers with elegant floral patterns that bring peace and tranquility to your spiritual moments. The soft texture and durable construction ensure comfort and longevity for daily use.', 'Beautiful handcrafted prayer mat made with premium materials. Perfect for daily prayers with elegant floral patterns.', 150000.00, 100000.00, TRUE, 5000.00, 5000.00, 'active', TRUE),
+INSERT INTO products (name, slug, description, short_description, price, discounted_price, custom_name_enabled, pouch_custom_price, sajadah_custom_price, status, featured) VALUES
+('Blossom Prayer Collection', 'blossom-prayer-collection', 'Beautiful handcrafted prayer mat made with premium materials. Perfect for daily prayers with elegant floral patterns that bring peace and tranquility to your spiritual moments. The soft texture and durable construction ensure comfort and longevity for daily use.', 'Beautiful handcrafted prayer mat made with premium materials. Perfect for daily prayers with elegant floral patterns.', 150000.00, 100000.00, TRUE, 5000.00, 5000.00, 'active', TRUE),
 
-('Premium Prayer Mat', 'Luxurious prayer mat crafted from the finest materials. Features intricate designs and superior comfort for enhanced spiritual experience. Durable and easy to maintain.', 'Luxurious prayer mat crafted from the finest materials with intricate designs.', 125000.00, NULL, FALSE, 0.00, 0.00, 'active', TRUE),
+('Premium Prayer Mat', 'premium-prayer-mat', 'Luxurious prayer mat crafted from the finest materials. Features intricate designs and superior comfort for enhanced spiritual experience. Durable and easy to maintain.', 'Luxurious prayer mat crafted from the finest materials with intricate designs.', 125000.00, NULL, FALSE, 0.00, 0.00, 'active', TRUE),
 
-('Azhara Sacred Mat', 'Sacred prayer mat with traditional Islamic patterns. Made with high-quality materials that provide comfort during prayer. Perfect for personal use or as a gift.', 'Sacred prayer mat with traditional Islamic patterns and high-quality materials.', 135000.00, NULL, TRUE, 7500.00, 7500.00, 'active', FALSE),
+('Azhara Sacred Mat', 'azhara-sacred-mat', 'Sacred prayer mat with traditional Islamic patterns. Made with high-quality materials that provide comfort during prayer. Perfect for personal use or as a gift.', 'Sacred prayer mat with traditional Islamic patterns and high-quality materials.', 135000.00, NULL, TRUE, 7500.00, 7500.00, 'active', FALSE),
 
-('Premium Black Mat', 'Elegant black prayer mat with subtle patterns. Perfect for those who prefer minimalist design. Made with premium materials for durability and comfort.', 'Elegant black prayer mat with subtle patterns and minimalist design.', 150000.00, NULL, FALSE, 0.00, 0.00, 'active', FALSE),
+('Premium Black Mat', 'premium-black-mat', 'Elegant black prayer mat with subtle patterns. Perfect for those who prefer minimalist design. Made with premium materials for durability and comfort.', 'Elegant black prayer mat with subtle patterns and minimalist design.', 150000.00, NULL, FALSE, 0.00, 0.00, 'active', FALSE),
 
-('Blossom Sajadah Set', 'Complete sajadah set with matching accessories. Includes prayer mat, pouch, and prayer beads. Perfect for complete spiritual experience.', 'Complete sajadah set with matching accessories including prayer mat and pouch.', 115000.00, NULL, TRUE, 5000.00, 5000.00, 'active', TRUE),
+('Blossom Sajadah Set', 'blossom-sajadah-set', 'Complete sajadah set with matching accessories. Includes prayer mat, pouch, and prayer beads. Perfect for complete spiritual experience.', 'Complete sajadah set with matching accessories including prayer mat and pouch.', 115000.00, NULL, TRUE, 5000.00, 5000.00, 'active', TRUE),
 
-('Travel Prayer Mat', 'Compact and lightweight prayer mat perfect for travel. Folds easily and fits in carry-on luggage. Durable material that maintains quality even with frequent use.', 'Compact and lightweight prayer mat perfect for travel.', 85000.00, 75000.00, FALSE, 0.00, 0.00, 'active', FALSE);
+('Travel Prayer Mat', 'travel-prayer-mat', 'Compact and lightweight prayer mat perfect for travel. Folds easily and fits in carry-on luggage. Durable material that maintains quality even with frequent use.', 'Compact and lightweight prayer mat perfect for travel.', 85000.00, 75000.00, FALSE, 0.00, 0.00, 'active', FALSE);
 
 -- Insert Product Categories Relationships
 INSERT INTO product_categories (product_id, category_id) VALUES
