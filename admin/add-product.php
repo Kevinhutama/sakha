@@ -254,6 +254,59 @@ if (isset($_SESSION['form_data'])) {
 .required {
     color: #dc3545;
 }
+
+/* Quill Editor Styling */
+.ql-editor {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+    font-size: 14px !important;
+    line-height: 1.5 !important;
+}
+
+.ql-container {
+    border: 1px solid #dee2e6 !important;
+    border-top: none !important;
+    border-radius: 0 0 0.375rem 0.375rem !important;
+}
+
+.ql-toolbar.ql-snow {
+    border: 1px solid #dee2e6 !important;
+    border-bottom: none !important;
+    border-radius: 0.375rem 0.375rem 0 0 !important;
+    background: #f8f9fa !important;
+}
+
+.ql-toolbar.ql-snow .ql-picker-label {
+    border-color: #dee2e6 !important;
+}
+
+.ql-toolbar.ql-snow .ql-picker-label:hover {
+    background-color: #e9ecef !important;
+}
+
+.ql-toolbar.ql-snow button {
+    color: #495057 !important;
+}
+
+.ql-toolbar.ql-snow button:hover {
+    background-color: #e9ecef !important;
+    color: #212529 !important;
+}
+
+.ql-toolbar.ql-snow button.ql-active {
+    background-color: #007bff !important;
+    color: white !important;
+}
+
+.ql-snow .ql-tooltip {
+    background-color: #fff !important;
+    border: 1px solid #dee2e6 !important;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+}
+
+#quill-editor {
+    background: white;
+    border-radius: 0.375rem;
+}
 </style>
 
 <div class="container-fluid">
@@ -536,6 +589,10 @@ if (isset($_SESSION['form_data'])) {
     </form>
 </div>
 
+<!-- Quill.js CDN -->
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+
 <script>
 // Toggle custom pricing section
 document.getElementById('custom_name_enabled').addEventListener('change', function() {
@@ -575,6 +632,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Initialize slug generation
     initSlugGeneration();
+    
+    // Initialize Quill for Full Description
+    initQuill();
 });
 
 // Slug generation functionality
@@ -632,6 +692,50 @@ function toggleSlugEdit() {
         editBtn.innerHTML = '<iconify-icon icon="solar:pen-linear"></iconify-icon>';
         editBtn.className = 'btn btn-outline-secondary';
         editBtn.title = 'Edit slug';
+    }
+}
+
+// Initialize Quill for Full Description
+let quillEditor;
+
+function initQuill() {
+    if (typeof Quill !== 'undefined') {
+        // Hide the original textarea
+        document.getElementById('description').style.display = 'none';
+        
+        // Create a div for Quill editor
+        const quillContainer = document.createElement('div');
+        quillContainer.id = 'quill-editor';
+        quillContainer.style.height = '300px';
+        document.getElementById('description').parentNode.appendChild(quillContainer);
+        
+        // Initialize Quill
+        quillEditor = new Quill('#quill-editor', {
+            theme: 'snow',
+            modules: {
+                toolbar: [
+                    [{ 'header': [1, 2, 3, false] }],
+                    ['bold', 'italic', 'underline'],
+                    [{ 'color': [] }, { 'background': [] }],
+                    [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                    [{ 'align': [] }],
+                    ['link'],
+                    ['clean']
+                ]
+            },
+            placeholder: 'Detailed product description...'
+        });
+        
+        // Get initial content from textarea
+        const initialContent = document.getElementById('description').value;
+        if (initialContent) {
+            quillEditor.root.innerHTML = initialContent;
+        }
+        
+        // Update hidden textarea on content change
+        quillEditor.on('text-change', function() {
+            document.getElementById('description').value = quillEditor.root.innerHTML;
+        });
     }
 }
 
@@ -874,6 +978,11 @@ function removeColorImage(button) {
 
 // Form validation
 document.getElementById('addProductForm').addEventListener('submit', function(e) {
+    // Save Quill content to textarea before validation
+    if (typeof quillEditor !== 'undefined' && quillEditor) {
+        document.getElementById('description').value = quillEditor.root.innerHTML;
+    }
+    
     const name = document.getElementById('name').value.trim();
     const slug = document.getElementById('slug').value.trim();
     const price = document.getElementById('price').value;
@@ -926,7 +1035,38 @@ function generateDefaultValues() {
     document.getElementById('price').value = '299000';
     document.getElementById('discounted_price').value = '249000';
     document.getElementById('short_description').value = 'High-quality product with excellent features and modern design.';
-    document.getElementById('description').value = 'This is a comprehensive product description that highlights all the amazing features, benefits, and specifications of our premium product. Made with the finest materials and cutting-edge technology, this product delivers exceptional performance and value for money. Perfect for everyday use and special occasions.';
+    
+    // Set Quill content
+    const defaultDescription = `
+        <h3>Product Overview</h3>
+        <p>This is a comprehensive product description that highlights all the amazing features, benefits, and specifications of our premium product.</p>
+        
+        <h4>Key Features:</h4>
+        <ul>
+            <li><strong>Premium Quality:</strong> Made with the finest materials and cutting-edge technology</li>
+            <li><strong>Exceptional Performance:</strong> Delivers outstanding results and value for money</li>
+            <li><strong>Versatile Use:</strong> Perfect for everyday use and special occasions</li>
+            <li><strong>Modern Design:</strong> Contemporary styling that fits any setting</li>
+        </ul>
+        
+        <h4>Specifications:</h4>
+        <ul>
+            <li>High-quality construction</li>
+            <li>Durable and long-lasting</li>
+            <li>Easy to use and maintain</li>
+            <li>Excellent customer support</li>
+        </ul>
+        
+        <p><strong>Why Choose This Product?</strong><br>
+        Our product stands out from the competition with its superior quality, innovative features, and exceptional value. Trusted by thousands of satisfied customers worldwide.</p>
+    `;
+    
+    if (typeof quillEditor !== 'undefined' && quillEditor) {
+        quillEditor.root.innerHTML = defaultDescription;
+        document.getElementById('description').value = defaultDescription;
+    } else {
+        document.getElementById('description').value = defaultDescription;
+    }
     document.getElementById('status').value = 'active';
     document.getElementById('featured').checked = true;
     
