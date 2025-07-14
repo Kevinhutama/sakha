@@ -346,6 +346,26 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
                       <small class="form-text text-muted">All characters allowed</small>
                     </div>
                   </div>
+                  
+                  <!-- Font Style Selection -->
+                  <div class="font-style-option mt-3" id="fontStyleSection" style="display: none;">
+                    <h5 class="mb-3" style="font-family: 'Poppins', sans-serif;">Font Style</h5>
+                    <div class="font-style-wrapper">
+                      <select class="form-control" id="fontStyleSelect">
+                        <option value="font-01">Font - 01</option>
+                        <option value="font-02">Font - 02</option>
+                        <option value="font-03">Font - 03</option>
+                        <option value="font-04">Font - 04</option>
+                        <option value="font-05">Font - 05</option>
+                        <option value="font-06">Font - 06</option>
+                        <option value="font-07">Font - 07</option>
+                        <option value="font-08">Font - 08</option>
+                        <option value="font-09">Font - 09</option>
+                        <option value="font-10">Font - 10</option>
+                      </select>
+                      <small class="form-text text-muted mt-2">Choose a font style for your custom name. </br> <a href="#" id="showFontStyles" class="font-reference-link">View Font Styles</a> </small>
+                    </div>
+                  </div>
                 </div>
                 <?php endif; ?>
                
@@ -631,6 +651,47 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
     
     <?php include 'includes/login-modal.php'; ?>
 
+    <!-- Font Styles Modal -->
+    <div id="fontStylesModal" class="font-styles-modal" style="display: none;">
+      <div class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close-modal" id="closeFontModal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="font-styles-carousel">
+              <?php
+              // Get font style images from directory
+              $fontStylesDir = 'images/font-styles/';
+              if (is_dir($fontStylesDir)) {
+                  $images = glob($fontStylesDir . '*.{jpg,jpeg,png,gif,webp}', GLOB_BRACE);
+                  if ($images) {
+                      echo '<div class="font-style-viewer">';
+                      echo '<div class="font-style-navigation">';
+                      echo '<button id="prevFontBtn" class="nav-btn nav-btn-left" disabled>‹</button>';
+                      echo '<div class="font-style-counter"><span id="currentFontIndex">1</span> / <span id="totalFontStyles">' . count($images) . '</span></div>';
+                      echo '<button id="nextFontBtn" class="nav-btn nav-btn-right">›</button>';
+                      echo '</div>';
+                      echo '<div class="font-style-image-container">';
+                      foreach ($images as $index => $image) {
+                          $isActive = $index === 0 ? 'active' : '';
+                          echo '<img src="' . htmlspecialchars($image) . '" alt="Font Style ' . ($index + 1) . '" class="font-style-image ' . $isActive . '" data-index="' . $index . '">';
+                      }
+                      echo '</div>';
+                      echo '</div>';
+                  } else {
+                      echo '<p class="text-center text-muted">No font style images found.</p>';
+                  }
+              } else {
+                  echo '<p class="text-center text-muted">Font styles directory not found.</p>';
+              }
+              ?>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <style>
     .color-swatch {
         text-decoration: none !important;
@@ -750,6 +811,270 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
         padding: 4px 8px;
     }
     
+    /* Font Style Section */
+    .font-style-option {
+        border-top: 1px solid #eee;
+        padding-top: 20px;
+        margin-top: 20px;
+    }
+    
+    .font-style-option h5 {
+        color: #333;
+        font-weight: 600;
+        font-size: 16px;
+        margin-bottom: 15px;
+    }
+    
+    .font-style-wrapper {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+    }
+    
+    #fontStyleSelect {
+        border: 2px solid #ddd;
+        border-radius: 6px;
+        padding: 12px 15px;
+        font-size: 14px;
+        font-weight: 500;
+        background-color: white;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    
+    #fontStyleSelect:focus {
+        border-color: #333;
+        box-shadow: 0 0 0 0.2rem rgba(0,0,0,0.1);
+        outline: none;
+    }
+    
+    #fontStyleSelect:hover {
+        border-color: #333;
+        background-color: #fff;
+    }
+    
+    #fontStyleSelect option {
+        padding: 10px;
+        font-weight: 500;
+    }
+    
+    /* Font Reference Link */
+    .font-reference-link {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white !important;
+        padding: 8px 16px;
+        border-radius: 20px;
+        text-decoration: none !important;
+        font-weight: 700;
+        font-size: 13px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        display: inline-block;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        border: 2px solid transparent;
+        cursor: pointer;
+    }
+    
+    .font-reference-link:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        color: white !important;
+        text-decoration: none !important;
+    }
+    
+    .font-reference-link:active {
+        transform: translateY(0);
+    }
+    
+    /* Font Styles Modal */
+    .font-styles-modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 10000;
+        background-color: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .modal-overlay {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+    
+    .modal-content {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        max-width: 600px;
+        width: 100%;
+        max-height: 80vh;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px 25px;
+        border-bottom: 0px;
+        background-color: #fff;
+    }
+    
+    .modal-header h4 {
+        margin: 0;
+        color: #333;
+        font-weight: 600;
+        font-size: 20px;
+    }
+    
+    .close-modal {
+        background: none;
+        border: none;
+        font-size: 24px;
+        color: #666;
+        cursor: pointer;
+        padding: 5px;
+        line-height: 1;
+        transition: color 0.3s ease;
+    }
+    
+    .close-modal:hover {
+        color: #333;
+    }
+    
+    .modal-body {
+        padding: 25px;
+        overflow-y: auto;
+        max-height: calc(80vh - 100px);
+    }
+    
+    .font-style-viewer {
+        text-align: center;
+    }
+    
+    .font-style-navigation {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 0 20px;
+    }
+    
+    .nav-btn {
+        background: #333;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        font-size: 18px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .nav-btn:hover:not(:disabled) {
+        background: #555;
+        transform: scale(1.1);
+    }
+    
+    .nav-btn:disabled {
+        background: #ccc;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .font-style-counter {
+        background: #f8f9fa;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        color: #333;
+        border: 2px solid #dee2e6;
+    }
+    
+    .font-style-image-container {
+        position: relative;
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f8f9fa;
+        border-radius: 8px;
+        border: 2px solid #dee2e6;
+        overflow: hidden;
+    }
+    
+    .font-style-image {
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+        object-fit: contain;
+        display: none;
+        transition: opacity 0.3s ease;
+    }
+    
+    .font-style-image.active {
+        display: block;
+    }
+    
+    /* Responsive design */
+    @media (max-width: 768px) {
+        .modal-content {
+            margin: 10px;
+            max-height: 90vh;
+        }
+        
+        .font-style-navigation {
+            padding: 0 10px;
+        }
+        
+        .nav-btn {
+            width: 35px;
+            height: 35px;
+            font-size: 16px;
+        }
+        
+        .font-style-counter {
+            font-size: 14px;
+            padding: 6px 12px;
+        }
+        
+        .font-style-image-container {
+            min-height: 250px;
+        }
+        
+        .font-style-image {
+            max-height: 300px;
+        }
+        
+        .modal-header {
+            padding: 15px 20px;
+        }
+        
+        .modal-body {
+            padding: 20px;
+        }
+        
+        .font-reference-link {
+            font-size: 12px;
+            padding: 6px 12px;
+        }
+    }
+    
 
     </style>
 
@@ -835,6 +1160,7 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
                 $('#pouchNameInput').slideUp(300);
                 $('#pouchNameText').val('');
             }
+            toggleFontStyleSection();
         });
         
         $('#enableSajadahName').on('change', function() {
@@ -845,7 +1171,20 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
                 $('#sajadahNameInput').slideUp(300);
                 $('#sajadahNameText').val('');
             }
+            toggleFontStyleSection();
         });
+        
+        // Function to show/hide font style section
+        function toggleFontStyleSection() {
+            var pouchEnabled = $('#enablePouchName').is(':checked');
+            var sajadahEnabled = $('#enableSajadahName').is(':checked');
+            
+            if (pouchEnabled || sajadahEnabled) {
+                $('#fontStyleSection').slideDown(300);
+            } else {
+                $('#fontStyleSection').slideUp(300);
+            }
+        }
         
         // Custom name inputs - no character validation, all characters allowed
         
@@ -860,6 +1199,81 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
             var length = $(this).val().length;
             var maxLength = $(this).attr('maxlength');
             $(this).next('.form-text').text('All characters allowed (' + length + '/' + maxLength + ')');
+        });
+        
+        // Font Styles Modal functionality
+        let currentFontIndex = 0;
+        let totalFontStyles = parseInt($('#totalFontStyles').text()) || 0;
+        
+        $('#showFontStyles').on('click', function(e) {
+            e.preventDefault();
+            currentFontIndex = 0;
+            updateFontNavigation();
+            $('#fontStylesModal').fadeIn(300);
+            $('body').css('overflow', 'hidden'); // Prevent background scrolling
+        });
+        
+        // Font navigation functionality
+        $('#prevFontBtn').on('click', function() {
+            if (currentFontIndex > 0) {
+                currentFontIndex--;
+                updateFontNavigation();
+            }
+        });
+        
+        $('#nextFontBtn').on('click', function() {
+            if (currentFontIndex < totalFontStyles - 1) {
+                currentFontIndex++;
+                updateFontNavigation();
+            }
+        });
+        
+        function updateFontNavigation() {
+            // Update counter
+            $('#currentFontIndex').text(currentFontIndex + 1);
+            
+            // Update button states
+            $('#prevFontBtn').prop('disabled', currentFontIndex === 0);
+            $('#nextFontBtn').prop('disabled', currentFontIndex === totalFontStyles - 1);
+            
+            // Update active image
+            $('.font-style-image').removeClass('active');
+            $('.font-style-image[data-index="' + currentFontIndex + '"]').addClass('active');
+        }
+        
+        // Close modal functionality
+        $('#closeFontModal').on('click', function() {
+            $('#fontStylesModal').fadeOut(300);
+            $('body').css('overflow', 'auto'); // Restore scrolling
+        });
+        
+        // Close modal when clicking overlay
+        $('.modal-overlay').on('click', function(e) {
+            if (e.target === this) {
+                $('#fontStylesModal').fadeOut(300);
+                $('body').css('overflow', 'auto');
+            }
+        });
+        
+        // Close modal with ESC key
+        $(document).on('keydown', function(e) {
+            if (e.key === 'Escape' && $('#fontStylesModal').is(':visible')) {
+                $('#fontStylesModal').fadeOut(300);
+                $('body').css('overflow', 'auto');
+            }
+        });
+        
+        // Keyboard navigation for font styles
+        $(document).on('keydown', function(e) {
+            if ($('#fontStylesModal').is(':visible')) {
+                if (e.key === 'ArrowLeft' && currentFontIndex > 0) {
+                    currentFontIndex--;
+                    updateFontNavigation();
+                } else if (e.key === 'ArrowRight' && currentFontIndex < totalFontStyles - 1) {
+                    currentFontIndex++;
+                    updateFontNavigation();
+                }
+            }
         });
     });
     </script>

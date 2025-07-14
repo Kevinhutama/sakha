@@ -230,6 +230,28 @@ function buildSortOrder($sortBy) {
         transform: scale(1.02);
       }
       
+      /* Price styling */
+      .discounted-price {
+        color: #dc3545 !important;
+        font-weight: 400!important;
+        font-size: 1.1em;
+      }
+      
+      .original-price {
+        font-size: 0.85em !important;
+        color: #6c757d !important;
+        
+        text-decoration: line-through;
+        margin-left: 8px;
+        font-size: 1.1em;
+      }
+      
+      .regular-price {
+        font-size: 1.1em;
+        font-weight: 300!important;
+        color: #6c757d !important;
+      }
+      
       /* Price Range Slider Styles */
       .price-range-slider {
         padding: 10px 0;
@@ -584,22 +606,22 @@ function buildSortOrder($sortBy) {
                         <div class="image-holder clickable-image" onclick="window.location.href='product-detail.php?slug=<?php echo urlencode($product['slug']); ?>'">
                           <img src="<?php echo htmlspecialchars(getProductImage($product['primary_image'])); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-fluid primary-image">
                           <img src="<?php echo htmlspecialchars(getProductImage($product['secondary_image'])); ?>" alt="<?php echo htmlspecialchars($product['name']); ?> Secondary" class="img-fluid secondary-image">
-                        </div>
-                        <div class="card-detail text-center pt-3 pb-2">
-                          <h5 class="card-title fs-3 text-capitalize">
-                            <a href="product-detail.php?id=<?php echo $product['id']; ?>"><?php echo htmlspecialchars($product['name']); ?></a>
-                          </h5>
-                          <span class="item-price text-primary fs-3 fw-light">
-                            <?php if ($product['discounted_price'] && $product['discounted_price'] < $product['price']): ?>
-                              <?php echo formatPrice($product['discounted_price']); ?>
-                              <del class="text-muted ms-2"><?php echo formatPrice($product['price']); ?></del>
-                            <?php else: ?>
-                              <?php echo formatPrice($product['price']); ?>
-                            <?php endif; ?>
-                          </span>
-                        </div>
+                                              </div>
+                      <div class="card-detail text-center pt-3 pb-2">
+                        <h5 class="card-title fs-3 text-capitalize">
+                          <a href="product-detail.php?id=<?php echo $product['id']; ?>"><?php echo htmlspecialchars($product['name']); ?></a>
+                        </h5>
+                        <span class="item-price fs-3 fw-light">
+                          <?php if ($product['discounted_price'] && $product['discounted_price'] < $product['price']): ?>
+                            <span class="discounted-price text-danger fw-bold"><?php echo formatPrice($product['discounted_price']); ?></span>
+                            <del class="original-price text-muted ms-2"><?php echo formatPrice($product['price']); ?></del>
+                          <?php else: ?>
+                            <span class="regular-price text-primary"><?php echo formatPrice($product['price']); ?></span>
+                          <?php endif; ?>
+                        </span>
                       </div>
-                    <?php else: ?>
+                    </div>
+                  <?php else: ?>
                       <!-- Product with only primary image -->
                       <div class="product-card position-relative mb-3">
                         <div class="image-holder zoom-effect clickable-image" onclick="window.location.href='product-detail.php?slug=<?php echo urlencode($product['slug']); ?>'">
@@ -609,12 +631,12 @@ function buildSortOrder($sortBy) {
                           <h5 class="card-title fs-3 text-capitalize">
                             <a href="product-detail.php?id=<?php echo $product['id']; ?>"><?php echo htmlspecialchars($product['name']); ?></a>
                           </h5>
-                          <span class="item-price text-primary fs-3 fw-light">
+                          <span class="item-price fs-3 fw-light">
                             <?php if ($product['discounted_price'] && $product['discounted_price'] < $product['price']): ?>
-                              <?php echo formatPrice($product['discounted_price']); ?>
-                              <del class="text-muted ms-2"><?php echo formatPrice($product['price']); ?></del>
+                              <span class="discounted-price text-danger fw-bold"><?php echo formatPrice($product['discounted_price']); ?></span>
+                              <del class="original-price text-muted ms-2"><?php echo formatPrice($product['price']); ?></del>
                             <?php else: ?>
-                              <?php echo formatPrice($product['price']); ?>
+                              <span class="regular-price text-primary"><?php echo formatPrice($product['price']); ?></span>
                             <?php endif; ?>
                           </span>
                         </div>
