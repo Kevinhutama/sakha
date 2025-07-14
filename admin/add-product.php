@@ -54,7 +54,7 @@ if ($edit_mode && $product_id) {
             $form_data['categories'] = $product_categories;
             
             // Get product colors
-            $query = "SELECT color_name, color_code FROM product_colors WHERE product_id = ? AND status = 'active' ORDER BY id";
+            $query = "SELECT color_name, color_code FROM product_colors WHERE product_id = ? AND status = 'active' ORDER BY sort_order, id";
             $stmt = $db->prepare($query);
             $stmt->execute([$product_id]);
             $colors = $stmt->fetchAll(PDO::FETCH_ASSOC);

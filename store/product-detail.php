@@ -44,7 +44,7 @@ try {
     }
     
     // Get product colors
-    $query = "SELECT * FROM product_colors WHERE product_id = ? AND status = 'active' ORDER BY id";
+    $query = "SELECT * FROM product_colors WHERE product_id = ? AND status = 'active' ORDER BY sort_order, id";
     $stmt = $db->prepare($query);
     $stmt->execute([$product['id']]);
     $colors = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -55,7 +55,7 @@ try {
     $stmt->execute([$product['id']]);
     $sizes = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Get product images (filtered by color if specified)
+    // Get product images (filtered by color if specified, or default to first color)
     if (!empty($selected_color)) {
         // First, get the color data to validate the color exists
         $color_query = "SELECT * FROM product_colors WHERE product_id = ? AND (color_name = ? OR color_code = ?) AND status = 'active' LIMIT 1";
@@ -73,26 +73,51 @@ try {
             $stmt->execute([$product['id'], $selected_color_data['id']]);
             $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // If no images found for this color, fall back to all images
-            if (empty($images)) {
+            // If no images found for this color, fall back to first color's images
+            if (empty($images) && !empty($colors)) {
+                $query = "SELECT pi.* FROM product_images pi 
+                          JOIN product_colors pc ON pi.color_id = pc.id 
+                          WHERE pi.product_id = ? AND pc.id = ? AND pi.status = 'active' 
+                          ORDER BY pi.is_primary DESC, pi.id";
+                $stmt = $db->prepare($query);
+                $stmt->execute([$product['id'], $colors[0]['id']]);
+                $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+        } else {
+            // Color not found, show first color's images if available
+            if (!empty($colors)) {
+                $query = "SELECT pi.* FROM product_images pi 
+                          JOIN product_colors pc ON pi.color_id = pc.id 
+                          WHERE pi.product_id = ? AND pc.id = ? AND pi.status = 'active' 
+                          ORDER BY pi.is_primary DESC, pi.id";
+                $stmt = $db->prepare($query);
+                $stmt->execute([$product['id'], $colors[0]['id']]);
+                $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            } else {
+                // No colors available, show all images
                 $query = "SELECT * FROM product_images WHERE product_id = ? AND status = 'active' ORDER BY is_primary DESC, id";
                 $stmt = $db->prepare($query);
                 $stmt->execute([$product['id']]);
                 $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
             }
+        }
+    } else {
+        // No color specified, show first color's images by default
+        if (!empty($colors)) {
+            $query = "SELECT pi.* FROM product_images pi 
+                      JOIN product_colors pc ON pi.color_id = pc.id 
+                      WHERE pi.product_id = ? AND pc.id = ? AND pi.status = 'active' 
+                      ORDER BY pi.is_primary DESC, pi.id";
+            $stmt = $db->prepare($query);
+            $stmt->execute([$product['id'], $colors[0]['id']]);
+            $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
         } else {
-            // Color not found, show all images
+            // No colors available, show all images
             $query = "SELECT * FROM product_images WHERE product_id = ? AND status = 'active' ORDER BY is_primary DESC, id";
             $stmt = $db->prepare($query);
             $stmt->execute([$product['id']]);
             $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
-    } else {
-        // No color specified, show all images
-        $query = "SELECT * FROM product_images WHERE product_id = ? AND status = 'active' ORDER BY is_primary DESC, id";
-        $stmt = $db->prepare($query);
-        $stmt->execute([$product['id']]);
-        $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     
     // Get product categories
