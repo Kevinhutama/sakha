@@ -12,12 +12,12 @@ $db = $database->getConnection();
 $query = "SELECT p.*, 
                  GROUP_CONCAT(DISTINCT c.name ORDER BY c.name SEPARATOR ', ') as categories,
                  GROUP_CONCAT(DISTINCT CONCAT(pc.color_name, ':', pc.color_code) ORDER BY pc.sort_order SEPARATOR ', ') as colors,
-                 pi.image_path as primary_image
+                 pt.primary_image
           FROM products p
           LEFT JOIN product_categories pc_rel ON p.id = pc_rel.product_id
           LEFT JOIN categories c ON pc_rel.category_id = c.id
           LEFT JOIN product_colors pc ON p.id = pc.product_id AND pc.status = 'active'
-          LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
+          LEFT JOIN product_thumbnails pt ON p.id = pt.product_id
           GROUP BY p.id
           ORDER BY p.created_at DESC";
 

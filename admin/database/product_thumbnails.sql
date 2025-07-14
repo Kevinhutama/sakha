@@ -18,9 +18,12 @@ CREATE TABLE product_thumbnails (
     INDEX idx_product_id (product_id)
 );
 
--- Show the created table structure
-DESCRIBE product_thumbnails;
+-- Insert dummy thumbnail data for existing products
+INSERT INTO product_thumbnails (product_id, primary_image, secondary_image) VALUES
+(1, 'images/products/blossom - 1.webp', 'images/products/bolossom - 2.webp'),
+(2, 'images/products/premium - 1.webp', 'images/products/premium - 2.webp'),
+(3, 'images/products/azhara - 1.webp', NULL),
+(4, 'images/products/premium - 2.webp', NULL),
+(5, 'images/products/bolossom - 2.webp', 'images/products/blossom - 1.webp'),
+(6, 'images/products/blossom - 1.webp', NULL);
 
--- Sample query to verify table creation
-SELECT COUNT(*) as table_exists FROM information_schema.tables 
-WHERE table_schema = 'admin_portal' AND table_name = 'product_thumbnails'; 
