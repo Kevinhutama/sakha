@@ -21,6 +21,7 @@ $selectedCategory = isset($_GET['category']) ? trim($_GET['category']) : '';
 $searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
 $minPrice = isset($_GET['min_price']) ? max(0, floatval($_GET['min_price'])) : 0;
 $maxPrice = isset($_GET['max_price']) ? floatval($_GET['max_price']) : 0;
+$sortBy = isset($_GET['sort']) ? trim($_GET['sort']) : 'default';
 
 try {
     // Get all active categories
@@ -87,11 +88,12 @@ try {
     $endResult = min($offset + $productsPerPage, $totalProducts);
     
     // Query to get products with thumbnails with pagination and filters
+    $orderBy = buildSortOrder($sortBy);
     $query = "SELECT p.*, pt.primary_image, pt.secondary_image 
               FROM products p 
               LEFT JOIN product_thumbnails pt ON p.id = pt.product_id 
               WHERE $whereClause 
-              ORDER BY p.created_at DESC
+              ORDER BY $orderBy
               LIMIT $productsPerPage OFFSET $offset";
     
     $stmt = $db->prepare($query);
@@ -128,6 +130,22 @@ function buildPaginationUrl($page) {
         return $value !== '' && $value !== null;
     });
     return '?' . http_build_query($params);
+}
+
+// Function to build sort order clause
+function buildSortOrder($sortBy) {
+    switch ($sortBy) {
+        case 'name_asc':
+            return 'p.name ASC';
+        case 'name_desc':
+            return 'p.name DESC';
+        case 'price_asc':
+            return 'COALESCE(p.discounted_price, p.price) ASC';
+        case 'price_desc':
+            return 'COALESCE(p.discounted_price, p.price) DESC';
+        default:
+            return 'p.created_at DESC';
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -320,6 +338,126 @@ function buildPaginationUrl($page) {
         font-size: 11px;
         padding: 2px 8px;
       }
+      
+      /* Enhanced Sort dropdown styling */
+      .sort-by {
+        min-width: 220px;
+      }
+      
+      .sort-wrapper {
+        background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+        border: 2px solid #e9ecef;
+        border-radius: 12px;
+        padding: 0;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        overflow: hidden;
+      }
+      
+      .sort-wrapper:hover {
+        border-color: #333;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        transform: translateY(-1px);
+      }
+      
+      .sort-wrapper:focus-within {
+        border-color: #333;
+        box-shadow: 0 0 0 3px rgba(0,0,0,0.1);
+      }
+      
+      .sort-icon {
+        position: absolute;
+        left: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+        z-index: 2;
+        pointer-events: none;
+        transition: color 0.3s ease;
+      }
+      
+      .sort-wrapper:hover .sort-icon {
+        color: #333;
+      }
+      
+      .sort-select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background: transparent;
+        border: none;
+        padding: 10px 25px 7px 45px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+        cursor: pointer;
+        width: 100%;
+        outline: none;
+        position: relative;
+        z-index: 1;
+      }
+      
+      .sort-select:focus {
+        outline: none;
+        box-shadow: none;
+      }
+      
+      .dropdown-arrow {
+        position: absolute;
+        right: 15px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: #666;
+        pointer-events: none;
+        transition: all 0.3s ease;
+      }
+      
+      .sort-wrapper {
+        margin-bottom: 10px!important;
+      }
+      
+      .sort-wrapper:hover .dropdown-arrow {
+        color: #333;
+        transform: translateY(-50%) scale(1.1);
+      }
+      
+      .sort-wrapper:focus-within .dropdown-arrow {
+        transform: translateY(-50%) rotate(180deg);
+      }
+      
+      /* Custom option styling for better browsers */
+      .sort-select option {
+        padding: 12px 16px;
+        font-size: 14px;
+        background-color: white;
+        color: #333;
+        border: none;
+      }
+      
+      .sort-select option:checked {
+        background-color: #f8f9fa;
+        font-weight: 600;
+      }
+      
+      /* Responsive adjustments */
+      @media (max-width: 768px) {
+        .sort-by {
+          min-width: 180px;
+        }
+        
+        .sort-select {
+          padding: 12px 40px 12px 40px;
+          font-size: 13px;
+        }
+        
+        .sort-icon {
+          left: 12px;
+        }
+        
+        .dropdown-arrow {
+          right: 12px;
+        }
+      }
     </style>
     
     <!-- script
@@ -365,7 +503,7 @@ function buildPaginationUrl($page) {
                 <?php endif; ?>
                 
                 <!-- Active Filters Display -->
-                <?php if (!empty($selectedCategory) || !empty($searchQuery) || $minPrice > 0 || $maxPrice < $globalMaxPrice): ?>
+                <?php if (!empty($selectedCategory) || !empty($searchQuery) || $minPrice > 0 || $maxPrice < $globalMaxPrice || $sortBy !== 'default'): ?>
                   <div class="active-filters mt-2">
                     <small class="text-muted">Active filters: </small>
                     <?php if (!empty($selectedCategory)): ?>
@@ -377,22 +515,41 @@ function buildPaginationUrl($page) {
                     <?php if ($minPrice > 0 || $maxPrice < $globalMaxPrice): ?>
                       <span class="badge bg-secondary me-1">Price: RP <?php echo number_format($minPrice, 0, ',', '.'); ?> - RP <?php echo number_format($maxPrice, 0, ',', '.'); ?></span>
                     <?php endif; ?>
+                    <?php if ($sortBy !== 'default'): ?>
+                      <span class="badge bg-info me-1">Sort: <?php 
+                        switch($sortBy) {
+                          case 'name_asc': echo 'Name (A-Z)'; break;
+                          case 'name_desc': echo 'Name (Z-A)'; break;
+                          case 'price_asc': echo 'Price (Low-High)'; break;
+                          case 'price_desc': echo 'Price (High-Low)'; break;
+                          default: echo 'Default'; break;
+                        }
+                      ?></span>
+                    <?php endif; ?>
                     <a href="<?php echo basename($_SERVER['PHP_SELF']); ?>" class="btn btn-outline-secondary btn-sm ms-2 clear-filters">Clear All</a>
                   </div>
                 <?php endif; ?>
               </div>
               <div class="sort-by">
-                <select id="input-sort" class="form-control" data-filter-sort="" data-filter-order="">
-                  <option value="">Default sorting</option>
-                  <option value="">Name (A - Z)</option>
-                  <option value="">Name (Z - A)</option>
-                  <option value="">Price (Low-High)</option>
-                  <option value="">Price (High-Low)</option>
-                  <option value="">Rating (Highest)</option>
-                  <option value="">Rating (Lowest)</option>
-                  <option value="">Model (A - Z)</option>
-                  <option value="">Model (Z - A)</option>   
-                </select>
+                <div class="sort-wrapper position-relative">
+                  <div class="sort-icon">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18M7 12h10m-7 6h4"></path>
+                    </svg>
+                  </div>
+                  <select id="input-sort" class="form-control sort-select">
+                    <option value="default" <?php echo $sortBy === 'default' ? 'selected' : ''; ?>>Default sorting</option>
+                    <option value="name_asc" <?php echo $sortBy === 'name_asc' ? 'selected' : ''; ?>>Name (A - Z)</option>
+                    <option value="name_desc" <?php echo $sortBy === 'name_desc' ? 'selected' : ''; ?>>Name (Z - A)</option>
+                    <option value="price_asc" <?php echo $sortBy === 'price_asc' ? 'selected' : ''; ?>>Price (Low - High)</option>
+                    <option value="price_desc" <?php echo $sortBy === 'price_desc' ? 'selected' : ''; ?>>Price (High - Low)</option>
+                  </select>
+                  <div class="dropdown-arrow">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="6,9 12,15 18,9"></polyline>
+                    </svg>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="row product-content product-store">
@@ -524,6 +681,9 @@ function buildPaginationUrl($page) {
                     <?php if ($maxPrice < $globalMaxPrice): ?>
                       <input type="hidden" name="max_price" value="<?php echo $maxPrice; ?>">
                     <?php endif; ?>
+                    <?php if ($sortBy !== 'default'): ?>
+                      <input type="hidden" name="sort" value="<?php echo htmlspecialchars($sortBy); ?>">
+                    <?php endif; ?>
                     <div class="search-icon position-absolute end-0">
                       <button type="submit" class="btn p-0 border-0 bg-transparent">
                         <svg width="26" height="26" class="search">
@@ -538,12 +698,12 @@ function buildPaginationUrl($page) {
                 <h5 class="widget-title text-decoration-underline text-uppercase">Categories</h5>
                 <ul class="product-categories sidebar-list list-unstyled">
                   <li class="cat-item">
-                    <a href="?<?php echo http_build_query(array_merge($_GET, ['category' => '', 'page' => 1])); ?>" 
+                    <a href="?<?php echo http_build_query(array_filter(array_merge($_GET, ['category' => '', 'page' => 1]))); ?>" 
                        class="<?php echo empty($selectedCategory) ? 'active' : ''; ?>">All</a>
                   </li>
                   <?php foreach ($categories as $category): ?>
                     <li class="cat-item">
-                      <a href="?<?php echo http_build_query(array_merge($_GET, ['category' => $category['slug'], 'page' => 1])); ?>" 
+                      <a href="?<?php echo http_build_query(array_filter(array_merge($_GET, ['category' => $category['slug'], 'page' => 1]))); ?>" 
                          class="<?php echo ($selectedCategory === $category['slug']) ? 'active' : ''; ?>">
                         <?php echo htmlspecialchars($category['name']); ?>
                       </a>
@@ -706,6 +866,25 @@ function buildPaginationUrl($page) {
             if (isNaN(value)) {
                 $(this).val($(this).attr('min'));
             }
+        });
+        
+        // Sort dropdown functionality
+        $('#input-sort').change(function() {
+            const selectedSort = $(this).val();
+            
+            // Get current URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (selectedSort === 'default') {
+                urlParams.delete('sort');
+            } else {
+                urlParams.set('sort', selectedSort);
+            }
+            
+            urlParams.set('page', 1); // Reset to first page
+            
+            // Navigate to new URL
+            window.location.href = '?' + urlParams.toString();
         });
     });
     </script>
