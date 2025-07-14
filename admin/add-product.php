@@ -2,7 +2,17 @@
 require_once 'includes/config.php';
 requireLogin();
 
-$page_title = "Add New Product - MaterialM Admin";
+// Check if we're in edit mode
+$edit_mode = false;
+$product_id = null;
+$existing_product = null;
+
+if (isset($_GET['id']) && is_numeric($_GET['id'])) {
+    $edit_mode = true;
+    $product_id = intval($_GET['id']);
+}
+
+$page_title = $edit_mode ? "Edit Product - MaterialM Admin" : "Add New Product - MaterialM Admin";
 
 // Get database connection
 $database = new Database();
@@ -14,8 +24,91 @@ $stmt = $db->prepare($query);
 $stmt->execute();
 $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Get form data from session if available (for error repopulation)
+// Get form data from session if available (for error repopulation) or load existing product data
 $form_data = $_SESSION['form_data'] ?? [];
+
+// If in edit mode, load existing product data
+if ($edit_mode && $product_id) {
+    try {
+        // Get product details
+        $query = "SELECT * FROM products WHERE id = ? AND status != 'deleted'";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$product_id]);
+        $existing_product = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if (!$existing_product) {
+            $_SESSION['error_message'] = "Product not found or has been deleted.";
+            header('Location: product-management.php');
+            exit();
+        }
+        
+        // Only use existing product data if no form data from session (no errors)
+        if (empty($form_data)) {
+            $form_data = $existing_product;
+            
+            // Get product categories
+            $query = "SELECT category_id FROM product_categories WHERE product_id = ?";
+            $stmt = $db->prepare($query);
+            $stmt->execute([$product_id]);
+            $product_categories = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $form_data['categories'] = $product_categories;
+            
+            // Get product colors
+            $query = "SELECT color_name, color_code FROM product_colors WHERE product_id = ? AND status = 'active' ORDER BY id";
+            $stmt = $db->prepare($query);
+            $stmt->execute([$product_id]);
+            $colors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if ($colors) {
+                $form_data['color_names'] = array_column($colors, 'color_name');
+                $form_data['color_codes'] = array_column($colors, 'color_code');
+            }
+            
+            // Get product sizes
+            $query = "SELECT size_name, size_value FROM product_sizes WHERE product_id = ? AND status = 'active' ORDER BY id";
+            $stmt = $db->prepare($query);
+            $stmt->execute([$product_id]);
+            $sizes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            if ($sizes) {
+                $form_data['size_names'] = array_column($sizes, 'size_name');
+                $form_data['size_values'] = array_column($sizes, 'size_value');
+            }
+            
+            // Get product images grouped by color
+            $query = "SELECT pi.*, pc.color_name FROM product_images pi 
+                      LEFT JOIN product_colors pc ON pi.color_id = pc.id 
+                      WHERE pi.product_id = ? AND pi.status = 'active' 
+                      ORDER BY pc.id, pi.is_primary DESC, pi.id";
+            $stmt = $db->prepare($query);
+            $stmt->execute([$product_id]);
+            $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Group images by color
+            $form_data['color_images'] = [];
+            if ($images) {
+                $color_images = [];
+                foreach ($images as $image) {
+                    $color_name = $image['color_name'] ?? 'default';
+                    if (!isset($color_images[$color_name])) {
+                        $color_images[$color_name] = [];
+                    }
+                    $color_images[$color_name][] = [
+                        'path' => $image['image_path'],
+                        'is_primary' => $image['is_primary']
+                    ];
+                }
+                $form_data['color_images'] = array_values($color_images);
+            }
+        }
+        
+    } catch (PDOException $e) {
+        error_log("Error loading product for edit: " . $e->getMessage());
+        $_SESSION['error_message'] = "Error loading product data.";
+        header('Location: product-management.php');
+        exit();
+    }
+}
 
 // Clean up temporary images from previous session (older than 1 hour)
 if (is_dir('../store/temp_images')) {
@@ -332,22 +425,34 @@ if (isset($_SESSION['form_data'])) {
     <!-- Page Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div>
-            <h4 class="fw-semibold mb-1">Add New Product</h4>
-            <p class="text-muted mb-0">Add a new product to your catalog</p>
+            <h4 class="fw-semibold mb-1"><?php echo $edit_mode ? 'Edit Product' : 'Add New Product'; ?></h4>
+            <p class="text-muted mb-0"><?php echo $edit_mode ? 'Update product information' : 'Add a new product to your catalog'; ?></p>
         </div>
         <div>
-            <button type="button" class="btn btn-info me-2" onclick="generateDefaultValues()">
-                <iconify-icon icon="solar:magic-stick-3-linear" class="me-2"></iconify-icon>
-                Generate
-            </button>
+            <?php if (!$edit_mode): ?>
+                <button type="button" class="btn btn-info me-2" onclick="generateDefaultValues()">
+                    <iconify-icon icon="solar:magic-stick-3-linear" class="me-2"></iconify-icon>
+                    Generate
+                </button>
+            <?php endif; ?>
             <a href="product-management.php" class="btn btn-outline-secondary me-2">
                 <iconify-icon icon="solar:arrow-left-linear" class="me-2"></iconify-icon>
                 Back to Products
             </a>
+            <?php if ($edit_mode): ?>
+                <a href="../store/product-detail.php?slug=<?php echo htmlspecialchars($existing_product['slug']); ?>" target="_blank" class="btn btn-outline-info me-2">
+                    <iconify-icon icon="solar:eye-linear" class="me-2"></iconify-icon>
+                    Preview
+                </a>
+            <?php endif; ?>
         </div>
     </div>
 
     <form id="addProductForm" action="add-product-handler.php" method="POST" enctype="multipart/form-data">
+        <?php if ($edit_mode): ?>
+            <input type="hidden" name="product_id" value="<?php echo $product_id; ?>">
+            <input type="hidden" name="edit_mode" value="1">
+        <?php endif; ?>
         
         <!-- Basic Information Section -->
         <div class="form-section">
@@ -529,7 +634,7 @@ if (isset($_SESSION['form_data'])) {
                         <?php if (!empty($images)): ?>
                             <?php foreach ($images as $imageIndex => $image): ?>
                                 <div class="color-image-preview-container">
-                                    <img src="<?php echo htmlspecialchars($image['path']); ?>" class="color-image-preview" alt="Color image">
+                                    <img src="../store/<?php echo htmlspecialchars($image['path']); ?>" class="color-image-preview" alt="Color image">
                                     <button type="button" class="color-remove-image" onclick="removeColorImage(this)">×</button>
                                     <?php if ($imageIndex === 0): ?>
                                         <span class="badge bg-primary position-absolute" style="top: 2px; left: 2px; font-size: 10px;">Primary</span>
@@ -583,7 +688,7 @@ if (isset($_SESSION['form_data'])) {
             <a href="product-management.php" class="btn btn-outline-secondary">Cancel</a>
             <button type="submit" class="btn btn-primary">
                 <iconify-icon icon="solar:diskette-linear" class="me-2"></iconify-icon>
-                Save Product
+                <?php echo $edit_mode ? 'Update Product' : 'Save Product'; ?>
             </button>
         </div>
     </form>

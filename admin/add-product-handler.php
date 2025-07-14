@@ -99,6 +99,25 @@ function uploadImage($file, $targetDir) {
 }
 
 try {
+    // Check if we're in edit mode
+    $edit_mode = isset($_POST['edit_mode']) && $_POST['edit_mode'] == '1';
+    $product_id = null;
+    
+    if ($edit_mode) {
+        $product_id = isset($_POST['product_id']) ? intval($_POST['product_id']) : 0;
+        if ($product_id <= 0) {
+            throw new Exception('Invalid product ID for edit operation.');
+        }
+        
+        // Verify product exists
+        $checkQuery = "SELECT id FROM products WHERE id = ? AND status != 'deleted'";
+        $checkStmt = $db->prepare($checkQuery);
+        $checkStmt->execute([$product_id]);
+        if (!$checkStmt->fetch()) {
+            throw new Exception('Product not found or has been deleted.');
+        }
+    }
+    
     // Start transaction
     $db->beginTransaction();
     
@@ -129,10 +148,17 @@ try {
     $featured = isset($_POST['featured']) ? 1 : 0;
     $categories = $_POST['categories'];
     
-    // Validate slug uniqueness
-    $slugCheckQuery = "SELECT id FROM products WHERE slug = ?";
-    $slugCheckStmt = $db->prepare($slugCheckQuery);
-    $slugCheckStmt->execute([$slug]);
+    // Validate slug uniqueness (exclude current product when editing)
+    if ($edit_mode) {
+        $slugCheckQuery = "SELECT id FROM products WHERE slug = ? AND id != ?";
+        $slugCheckStmt = $db->prepare($slugCheckQuery);
+        $slugCheckStmt->execute([$slug, $product_id]);
+    } else {
+        $slugCheckQuery = "SELECT id FROM products WHERE slug = ?";
+        $slugCheckStmt = $db->prepare($slugCheckQuery);
+        $slugCheckStmt->execute([$slug]);
+    }
+    
     if ($slugCheckStmt->fetch()) {
         throw new Exception('A product with this slug already exists. Please choose a different slug.');
     }
@@ -146,27 +172,60 @@ try {
         throw new Exception('Discounted price must be less than regular price.');
     }
     
-    // Insert product
-    $query = "INSERT INTO products (name, slug, description, short_description, price, discounted_price, 
-              custom_name_enabled, pouch_custom_price, sajadah_custom_price, status, featured) 
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // Insert or update product
+    if ($edit_mode) {
+        // Update existing product
+        $query = "UPDATE products SET name = ?, slug = ?, description = ?, short_description = ?, 
+                  price = ?, discounted_price = ?, custom_name_enabled = ?, pouch_custom_price = ?, 
+                  sajadah_custom_price = ?, status = ?, featured = ?, updated_at = CURRENT_TIMESTAMP 
+                  WHERE id = ?";
+        
+        $stmt = $db->prepare($query);
+        $stmt->execute([
+            $name,
+            $slug,
+            $description,
+            $short_description,
+            $price,
+            $discounted_price,
+            $custom_name_enabled,
+            $pouch_custom_price,
+            $sajadah_custom_price,
+            $status,
+            $featured,
+            $product_id
+        ]);
+    } else {
+        // Insert new product
+        $query = "INSERT INTO products (name, slug, description, short_description, price, discounted_price, 
+                  custom_name_enabled, pouch_custom_price, sajadah_custom_price, status, featured) 
+                  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        
+        $stmt = $db->prepare($query);
+        $stmt->execute([
+            $name,
+            $slug,
+            $description,
+            $short_description,
+            $price,
+            $discounted_price,
+            $custom_name_enabled,
+            $pouch_custom_price,
+            $sajadah_custom_price,
+            $status,
+            $featured
+        ]);
+        
+        $product_id = $db->lastInsertId();
+    }
     
-    $stmt = $db->prepare($query);
-    $stmt->execute([
-        $name,
-        $slug,
-        $description,
-        $short_description,
-        $price,
-        $discounted_price,
-        $custom_name_enabled,
-        $pouch_custom_price,
-        $sajadah_custom_price,
-        $status,
-        $featured
-    ]);
-    
-    $product_id = $db->lastInsertId();
+    // Handle product categories
+    if ($edit_mode) {
+        // Clear existing categories
+        $deleteCategoriesQuery = "DELETE FROM product_categories WHERE product_id = ?";
+        $deleteCategoriesStmt = $db->prepare($deleteCategoriesQuery);
+        $deleteCategoriesStmt->execute([$product_id]);
+    }
     
     // Insert product categories
     $categoryQuery = "INSERT INTO product_categories (product_id, category_id) VALUES (?, ?)";
@@ -174,6 +233,14 @@ try {
     
     foreach ($categories as $category_id) {
         $categoryStmt->execute([$product_id, $category_id]);
+    }
+    
+    // Handle product colors
+    if ($edit_mode) {
+        // Clear existing colors
+        $deleteColorsQuery = "DELETE FROM product_colors WHERE product_id = ?";
+        $deleteColorsStmt = $db->prepare($deleteColorsQuery);
+        $deleteColorsStmt->execute([$product_id]);
     }
     
     // Insert product colors
@@ -196,6 +263,14 @@ try {
         }
     }
     
+    // Handle product sizes
+    if ($edit_mode) {
+        // Clear existing sizes
+        $deleteSizesQuery = "DELETE FROM product_sizes WHERE product_id = ?";
+        $deleteSizesStmt = $db->prepare($deleteSizesQuery);
+        $deleteSizesStmt->execute([$product_id]);
+    }
+    
     // Insert product sizes
     if (!empty($_POST['size_names']) && !empty($_POST['size_values'])) {
         $sizeQuery = "INSERT INTO product_sizes (product_id, size_name, size_value, sort_order) VALUES (?, ?, ?, ?)";
@@ -214,6 +289,14 @@ try {
                 ]);
             }
         }
+    }
+    
+    // Handle product images
+    if ($edit_mode) {
+        // Clear existing images
+        $deleteImagesQuery = "DELETE FROM product_images WHERE product_id = ?";
+        $deleteImagesStmt = $db->prepare($deleteImagesQuery);
+        $deleteImagesStmt->execute([$product_id]);
     }
     
     // Handle color-specific image uploads
@@ -299,7 +382,11 @@ try {
     unset($_SESSION['form_data']);
     
     // Success message
-    $_SESSION['success_message'] = 'Product "' . $name . '" has been created successfully!';
+    if ($edit_mode) {
+        $_SESSION['success_message'] = 'Product "' . $name . '" has been updated successfully!';
+    } else {
+        $_SESSION['success_message'] = 'Product "' . $name . '" has been created successfully!';
+    }
     header('Location: product-management.php');
     exit;
     

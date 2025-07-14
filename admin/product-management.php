@@ -279,7 +279,7 @@ ob_start();
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <a href="edit-product.php?id=<?php echo $product['id']; ?>" class="btn btn-sm btn-outline-primary" title="Edit Product">
+                        <a href="add-product.php?id=<?php echo $product['id']; ?>" class="btn btn-sm btn-outline-primary" title="Edit Product">
                             <iconify-icon icon="solar:pen-bold"></iconify-icon>
                         </a>
                         <button class="btn btn-sm btn-outline-danger" type="button" title="Delete Product" onclick="deleteProduct(<?php echo $product['id']; ?>, '<?php echo htmlspecialchars($product['name'], ENT_QUOTES); ?>')">
