@@ -236,20 +236,46 @@ try {
     }
     
     // Handle product colors
+    $colorNames = $_POST['color_names'] ?? [];
+    $colorCodes = $_POST['color_codes'] ?? [];
+    
     if ($edit_mode) {
-        // Clear existing colors
+        // In edit mode, get existing color IDs and preserve images
+        $existingColorsQuery = "SELECT id, color_name, color_code, sort_order FROM product_colors WHERE product_id = ? ORDER BY sort_order";
+        $existingColorsStmt = $db->prepare($existingColorsQuery);
+        $existingColorsStmt->execute([$product_id]);
+        $existingColors = $existingColorsStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // BACKUP APPROACH: Store existing images temporarily
+        $existingImagesQuery = "SELECT pi.*, pc.sort_order as color_sort_order FROM product_images pi 
+                               LEFT JOIN product_colors pc ON pi.color_id = pc.id 
+                               WHERE pi.product_id = ? AND pi.status = 'active' 
+                               ORDER BY pc.sort_order, pi.sort_order";
+        $existingImagesStmt = $db->prepare($existingImagesQuery);
+        $existingImagesStmt->execute([$product_id]);
+        $existingImages = $existingImagesStmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Group existing images by color sort order
+        $imagesByColorOrder = [];
+        foreach ($existingImages as $image) {
+            $colorOrder = $image['color_sort_order'] ?? 0;
+            if (!isset($imagesByColorOrder[$colorOrder])) {
+                $imagesByColorOrder[$colorOrder] = [];
+            }
+            $imagesByColorOrder[$colorOrder][] = $image;
+        }
+        
+        error_log("EDIT MODE: Found " . count($existingImages) . " existing images grouped by color order: " . json_encode(array_keys($imagesByColorOrder)));
+        
+        // Clear existing colors AND images (we'll restore them after)
         $deleteColorsQuery = "DELETE FROM product_colors WHERE product_id = ?";
         $deleteColorsStmt = $db->prepare($deleteColorsQuery);
         $deleteColorsStmt->execute([$product_id]);
-    }
-    
-    // Insert product colors
-    if (!empty($_POST['color_names']) && !empty($_POST['color_codes'])) {
+        
+        // Insert updated colors and get mapping of old IDs to new IDs
+        $colorIdMapping = [];
         $colorQuery = "INSERT INTO product_colors (product_id, color_name, color_code, sort_order) VALUES (?, ?, ?, ?)";
         $colorStmt = $db->prepare($colorQuery);
-        
-        $colorNames = $_POST['color_names'];
-        $colorCodes = $_POST['color_codes'];
         
         for ($i = 0; $i < count($colorNames); $i++) {
             if (!empty($colorNames[$i]) && !empty($colorCodes[$i])) {
@@ -259,6 +285,79 @@ try {
                     trim($colorCodes[$i]),
                     $i
                 ]);
+                
+                $newColorId = $db->lastInsertId();
+                
+                // Find the corresponding old color ID if it exists
+                $oldColorId = null;
+                foreach ($existingColors as $existingColor) {
+                    if ($existingColor['sort_order'] == $i) {
+                        $oldColorId = $existingColor['id'];
+                        break;
+                    }
+                }
+                
+                if ($oldColorId) {
+                    $colorIdMapping[$oldColorId] = $newColorId;
+                }
+                
+                // BACKUP APPROACH: Restore existing images for this color order if no new images uploaded
+                if (isset($imagesByColorOrder[$i])) {
+                    $colorImageFieldName = "color_images_" . $i;
+                    $hasNewImages = isset($_FILES[$colorImageFieldName]) && !empty($_FILES[$colorImageFieldName]['name'][0]);
+                    
+                    if (!$hasNewImages) {
+                        // Restore existing images for this color
+                        $restoreImageQuery = "INSERT INTO product_images (product_id, color_id, image_path, alt_text, is_primary, sort_order, status) VALUES (?, ?, ?, ?, ?, ?, 'active')";
+                        $restoreImageStmt = $db->prepare($restoreImageQuery);
+                        
+                        foreach ($imagesByColorOrder[$i] as $image) {
+                            $restoreImageStmt->execute([
+                                $product_id,
+                                $newColorId,
+                                $image['image_path'],
+                                $image['alt_text'],
+                                $image['is_primary'],
+                                $image['sort_order']
+                            ]);
+                        }
+                        
+                        error_log("EDIT MODE: Restored " . count($imagesByColorOrder[$i]) . " existing images for color $i (new color_id: $newColorId)");
+                    }
+                }
+            }
+        }
+        
+        // Update existing images with new color IDs (legacy approach - might not be needed now)
+        if (!empty($colorIdMapping)) {
+            error_log("EDIT MODE: Color ID mapping: " . json_encode($colorIdMapping));
+            
+            $updateImageColorQuery = "UPDATE product_images SET color_id = ? WHERE product_id = ? AND color_id = ?";
+            $updateImageColorStmt = $db->prepare($updateImageColorQuery);
+            
+            foreach ($colorIdMapping as $oldColorId => $newColorId) {
+                $updateImageColorStmt->execute([$newColorId, $product_id, $oldColorId]);
+                $affectedRows = $updateImageColorStmt->rowCount();
+                error_log("EDIT MODE: Updated $affectedRows images from color_id $oldColorId to $newColorId");
+            }
+        } else {
+            error_log("EDIT MODE: No color ID mapping created - this might be the problem!");
+        }
+    } else {
+        // Insert product colors for new products
+        if (!empty($colorNames) && !empty($colorCodes)) {
+            $colorQuery = "INSERT INTO product_colors (product_id, color_name, color_code, sort_order) VALUES (?, ?, ?, ?)";
+            $colorStmt = $db->prepare($colorQuery);
+            
+            for ($i = 0; $i < count($colorNames); $i++) {
+                if (!empty($colorNames[$i]) && !empty($colorCodes[$i])) {
+                    $colorStmt->execute([
+                        $product_id,
+                        trim($colorNames[$i]),
+                        trim($colorCodes[$i]),
+                        $i
+                    ]);
+                }
             }
         }
     }
@@ -323,17 +422,34 @@ try {
         $imageQuery = "INSERT INTO product_images (product_id, color_id, image_path, alt_text, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?)";
         $imageStmt = $db->prepare($imageQuery);
         
+        // Debug: Log what we're about to process
+        error_log("EDIT MODE: Processing images for product_id: $product_id");
+        error_log("EDIT MODE: Color IDs after mapping: " . implode(', ', $colorIds));
+        error_log("EDIT MODE: Color names: " . implode(', ', $colorNames));
+        
+        // Debug: Check existing images before processing
+        $checkImagesQuery = "SELECT COUNT(*) as count FROM product_images WHERE product_id = ? AND status = 'active'";
+        $checkImagesStmt = $db->prepare($checkImagesQuery);
+        $checkImagesStmt->execute([$product_id]);
+        $imageCountBefore = $checkImagesStmt->fetchColumn();
+        error_log("EDIT MODE: Images before processing: $imageCountBefore");
+        
         // Process images for each color
         for ($colorIndex = 0; $colorIndex < count($colorIds); $colorIndex++) {
             $colorId = $colorIds[$colorIndex];
             $colorImageFieldName = "color_images_" . $colorIndex;
             
+            error_log("EDIT MODE: Checking color $colorIndex (ID: $colorId) for field: $colorImageFieldName");
+            
             // Check if new images are uploaded for this color
             if (isset($_FILES[$colorImageFieldName]) && !empty($_FILES[$colorImageFieldName]['name'][0])) {
+                error_log("EDIT MODE: Found new images for color $colorIndex - WILL DELETE existing images");
+                
                 // Clear existing images for this color only
                 $deleteColorImagesStmt->execute([$product_id, $colorId]);
                 
                 $imageCount = count($_FILES[$colorImageFieldName]['name']);
+                error_log("EDIT MODE: Processing $imageCount new images for color $colorIndex");
                 
                 for ($i = 0; $i < $imageCount; $i++) {
                     if (!empty($_FILES[$colorImageFieldName]['name'][$i])) {
@@ -357,14 +473,23 @@ try {
                                 $is_primary,
                                 $i
                             ]);
+                            error_log("EDIT MODE: Inserted new image for color $colorIndex: " . $uploadResult['path']);
                         } else {
                             throw new Exception('Image upload failed for color ' . $colorNames[$colorIndex] . ': ' . $uploadResult['message']);
                         }
                     }
                 }
+            } else {
+                error_log("EDIT MODE: No new images for color $colorIndex - PRESERVING existing images");
             }
             // If no new images for this color, existing images are preserved
         }
+        
+        // Debug: Check images after processing
+        $checkImagesStmt->execute([$product_id]);
+        $imageCountAfter = $checkImagesStmt->fetchColumn();
+        error_log("EDIT MODE: Images after processing: $imageCountAfter");
+        
     } else {
         // In create mode, insert all new images
         $imageQuery = "INSERT INTO product_images (product_id, color_id, image_path, alt_text, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?)";
