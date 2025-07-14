@@ -111,11 +111,6 @@ try {
     $totalPages = 0;
 }
 
-// Function to format price
-function formatPrice($price) {
-    return 'RP ' . number_format($price, 0, ',', '.');
-}
-
 // Function to get product image or default
 function getProductImage($imagePath) {
     if (empty($imagePath)) {

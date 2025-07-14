@@ -5,6 +5,23 @@
 $isLoggedIn = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
 $userName = isset($_SESSION['user_name']) ? $_SESSION['user_name'] : '';
 $userAvatar = isset($_SESSION['user_avatar']) ? $_SESSION['user_avatar'] : '';
+
+// Get cart count for the current user/session
+$cartCount = 0;
+$cartItems = [];
+$cartSummary = ['total_amount' => 0];
+
+try {
+    require_once __DIR__ . '/cart-functions.php';
+    $user_id = $isLoggedIn ? $_SESSION['user_id'] : null;
+    $cartCount = getCartCount($user_id, session_id());
+    $cartItems = getCartItems($user_id, session_id());
+    $cartSummary = getCartSummary($user_id, session_id());
+} catch (Exception $e) {
+    error_log("Navigation cart error: " . $e->getMessage());
+    
+}
+
 ?>
 
 <header id="header" class="site-header">
@@ -78,36 +95,52 @@ $userAvatar = isset($_SESSION['user_avatar']) ? $_SESSION['user_avatar'] : '';
                 <li class="cart-dropdown nav-item dropdown">
                   <a class="nav-link dropdown-toggle me-0" data-bs-toggle="dropdown" href="#" role="button" aria-expanded="false" title="Cart">
                     <i class="fas fa-shopping-cart" style="font-size: 18px;"></i>
-                    <span class="cart-count badge bg-primary rounded-pill ms-1">2</span>
+                    <span class="cart-count badge bg-primary rounded-pill ms-1"><?php echo $cartCount; ?></span>
                   </a>
                   <div class="dropdown-menu dropdown-menu-end p-3">
                     <h4 class="d-flex justify-content-between align-items-center mb-3">
                       <span class="text-primary">Your cart</span>
-                      <span class="badge bg-primary rounded-pill">2</span>
+                      <span class="badge bg-primary rounded-pill"><?php echo $cartCount; ?></span>
                     </h4>
                     <ul class="list-group mb-3">
-                      <li class="list-group-item bg-transparent border-dark d-flex justify-content-between lh-sm">
-                        <div>
-                          <h5 class="card-title fs-3 text-capitalize">
-                            <a href="single-product.html">Red Sajadah</a>
-                          </h5>
-                          <small class="text-body-secondary">Soft texture matt coated.</small>
-                        </div>
-                        <span class="text-primary">$120</span>
-                      </li>
-                      <li class="list-group-item bg-transparent border-dark d-flex justify-content-between lh-sm">
-                        <div>
-                          <h5 class="card-title fs-3 text-capitalize">
-                            <a href="single-product.html">Shiny Pot</a>
-                          </h5>
-                          <small class="text-body-secondary">This pot is ceramic.</small>
-                        </div>
-                        <span class="text-primary">$870</span>
-                      </li>
-                      <li class="list-group-item bg-transparent border-dark d-flex justify-content-between">
-                        <span class="text-uppercase"><b>Total (USD)</b></span>
-                        <strong>$990</strong>
-                      </li>
+                      <?php if (empty($cartItems)): ?>
+                        <li class="list-group-item bg-transparent border-dark text-center">
+                          <small class="text-body-secondary">Your cart is empty</small>
+                        </li>
+                      <?php else: ?>
+                        <?php foreach (array_slice($cartItems, 0, 3) as $item): ?>
+                          <li class="list-group-item bg-transparent border-dark d-flex justify-content-between lh-sm">
+                            <div>
+                              <h5 class="card-title fs-3 text-capitalize">
+                                <a href="product-detail.php?id=<?php echo $item['product_id']; ?>"><?php echo htmlspecialchars($item['product_name']); ?></a>
+                              </h5>
+                              <small class="text-body-secondary">
+                                <?php if ($item['color_name']): ?>
+                                  Color: <?php echo htmlspecialchars($item['color_name']); ?>
+                                <?php endif; ?>
+                                <?php if ($item['size_name']): ?>
+                                  | Size: <?php echo htmlspecialchars($item['size_name']); ?>
+                                <?php endif; ?>
+                                <?php if ($item['quantity'] > 1): ?>
+                                  | Qty: <?php echo $item['quantity']; ?>
+                                <?php endif; ?>
+                              </small>
+                            </div>
+                            <span class="text-primary"><?php echo formatPrice($item['item_total']); ?></span>
+                          </li>
+                        <?php endforeach; ?>
+                        <?php if (count($cartItems) > 3): ?>
+                          <li class="list-group-item bg-transparent border-dark text-center">
+                            <small class="text-body-secondary">... and <?php echo count($cartItems) - 3; ?> more items</small>
+                          </li>
+                        <?php endif; ?>
+                      <?php endif; ?>
+                      <?php if ($cartSummary && $cartSummary['total_amount'] > 0): ?>
+                        <li class="list-group-item bg-transparent border-dark d-flex justify-content-between">
+                          <span class="text-uppercase"><b>Total</b></span>
+                          <strong><?php echo formatPrice($cartSummary['total_amount']); ?></strong>
+                        </li>
+                      <?php endif; ?>
                     </ul>
                     <div class="d-flex flex-wrap justify-content-center">
                       <a class="w-100 btn btn-dark mb-1" href="cart.php">View Cart</a>

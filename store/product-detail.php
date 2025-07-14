@@ -142,11 +142,6 @@ try {
     exit();
 }
 
-// Function to format price
-function formatPrice($price) {
-    return 'RP ' . number_format($price, 0, ',', '.');
-}
-
 // Function to get primary image or default
 function getPrimaryImage($images) {
     if (empty($images)) {
@@ -213,6 +208,29 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
     
     <?php include 'includes/navigation.php'; ?>
     
+    <!-- Success/Error Messages -->
+    <?php if (isset($_SESSION['cart_success'])): ?>
+      <div class="alert alert-success alert-dismissible fade show" role="alert" style="margin-top: 70px; margin-bottom: 0; border-radius: 0;">
+        <div class="container">
+          <i class="fas fa-check-circle me-2"></i>
+          <?php echo htmlspecialchars($_SESSION['cart_success']); ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+      <?php unset($_SESSION['cart_success']); ?>
+    <?php endif; ?>
+    
+    <?php if (isset($_SESSION['cart_error'])): ?>
+      <div class="alert alert-danger alert-dismissible fade show" role="alert" style="margin-top: 70px; margin-bottom: 0; border-radius: 0;">
+        <div class="container">
+          <i class="fas fa-exclamation-circle me-2"></i>
+          <?php echo htmlspecialchars($_SESSION['cart_error']); ?>
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      </div>
+      <?php unset($_SESSION['cart_error']); ?>
+    <?php endif; ?>
+    
     <!-- <section class="hero-section jarallax d-flex align-items-center justify-content-center padding-medium pb-5" style="background: url(images/hero-img.jpg) no-repeat;">
       <div class="hero-content">
         <div class="container">
@@ -234,7 +252,7 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
       </div>
     </section>
      -->
-    <section class="single-product padding-large" style= "margin-top: 100px;">
+    <section class="single-product padding-large" style= "margin-top: <?php echo (isset($_SESSION['cart_success']) || isset($_SESSION['cart_error'])) ? '20px' : '100px'; ?>">
       <div class="container">
         <div class="row">
           <div class="col-lg-6">
@@ -300,7 +318,7 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
                                       strtolower($color['color_code']) === strtolower($selected_color)));
                         $colorUrl = buildColorUrl($color['color_name'], $product_slug, $product_id);
                         ?>
-                        <li class="select-item me-3 <?php echo $isSelected ? 'active' : ''; ?>" data-val="<?php echo htmlspecialchars($color['color_name']); ?>" title="<?php echo htmlspecialchars($color['color_name']); ?>">
+                        <li class="select-item me-3 <?php echo $isSelected ? 'active' : ''; ?>" data-val="<?php echo htmlspecialchars($color['color_name']); ?>" data-color-id="<?php echo $color['id']; ?>" title="<?php echo htmlspecialchars($color['color_name']); ?>">
                           <a href="<?php echo htmlspecialchars($colorUrl); ?>" class="color-swatch d-flex align-items-center">
                             <span class="color-indicator me-2" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: <?php echo htmlspecialchars($color['color_code']); ?>; border: 2px solid <?php echo $isSelected ? '#333' : '#ddd'; ?>;"></span>
                             <?php echo htmlspecialchars($color['color_name']); ?>
@@ -316,7 +334,7 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
                   <h4 class="item-title text-decoration-underline text-uppercase">Size:</h4>
                   <ul class="select-list list-unstyled d-flex mb-0">
                     <?php foreach ($sizes as $size): ?>
-                      <li data-value="<?php echo htmlspecialchars($size['size_value']); ?>" class="select-item me-3">
+                      <li data-value="<?php echo htmlspecialchars($size['size_value']); ?>" data-size-id="<?php echo $size['id']; ?>" class="select-item me-3">
                         <a href="#"><?php echo htmlspecialchars($size['size_name']); ?></a>
                       </li>
                     <?php endforeach; ?>
@@ -396,10 +414,21 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
                     </div>
                   </div>
                 </div>
-                <div class="action-buttons my-4 d-flex flex-wrap">
-                  <a href="#" class="btn btn-dark me-2 mb-1">Buy now</a>
-                  <a href="#" class="btn btn-dark">Add to cart</a>
-                </div>
+                <form id="addToCartForm" method="POST" action="cart-handler.php">
+                  <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
+                  <input type="hidden" name="color_id" id="selected_color_id" value="<?php echo $colors[0]['id'] ?? ''; ?>">
+                  <input type="hidden" name="size_id" id="selected_size_id" value="<?php echo $sizes[0]['id'] ?? ''; ?>">
+                  <input type="hidden" name="pouch_custom_enabled" id="pouch_custom_enabled_input" value="">
+                  <input type="hidden" name="pouch_custom_name" id="pouch_custom_name_input" value="">
+                  <input type="hidden" name="sajadah_custom_enabled" id="sajadah_custom_enabled_input" value="">
+                  <input type="hidden" name="sajadah_custom_name" id="sajadah_custom_name_input" value="">
+                  <input type="hidden" name="font_style" id="font_style_input" value="">
+                  
+                  <div class="action-buttons my-4 d-flex flex-wrap">
+                    <a href="#" class="btn btn-dark me-2 mb-1">Buy now</a>
+                    <button type="submit" class="btn btn-dark">Add to cart</button>
+                  </div>
+                </form>
               </div>
               <hr>
               <div class="meta-product">
@@ -1147,9 +1176,14 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
             // Add active class to clicked item
             $(this).addClass('active');
             
-            // Get selected size value
+            // Get selected size value and ID
             var selectedSize = $(this).data('value');
-            console.log('Selected size:', selectedSize);
+            var selectedSizeId = $(this).data('size-id');
+            
+            // Update hidden form field
+            $('#selected_size_id').val(selectedSizeId);
+            
+            console.log('Selected size:', selectedSize, 'ID:', selectedSizeId);
         });
         
         // Set first size as default active
@@ -1269,16 +1303,65 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
         
         // Keyboard navigation for font styles
         $(document).on('keydown', function(e) {
-            if ($('#fontStylesModal').is(':visible')) {
-                if (e.key === 'ArrowLeft' && currentFontIndex > 0) {
-                    currentFontIndex--;
-                    updateFontNavigation();
-                } else if (e.key === 'ArrowRight' && currentFontIndex < totalFontStyles - 1) {
-                    currentFontIndex++;
-                    updateFontNavigation();
-                }
+            if ($('#fontStylesModal').is(':visible') && e.key === 'ArrowLeft' && currentFontIndex > 0) {
+                currentFontIndex--;
+                updateFontNavigation();
+            } else if ($('#fontStylesModal').is(':visible') && e.key === 'ArrowRight' && currentFontIndex < totalFontStyles - 1) {
+                currentFontIndex++;
+                updateFontNavigation();
             }
         });
+        
+        // Handle form submission
+        $('#addToCartForm').on('submit', function(e) {
+            // Update hidden fields with current selections
+            
+            // Get active color ID
+            var activeColorId = $('.color-options .select-item.active').data('color-id') || '';
+            $('#selected_color_id').val(activeColorId);
+            
+            // Get active size ID
+            var activeSizeId = $('.swatch .select-item.active').data('size-id') || '';
+            $('#selected_size_id').val(activeSizeId);
+            
+            // Custom name options
+            var pouchEnabled = $('#enablePouchName').is(':checked');
+            var sajadahEnabled = $('#enableSajadahName').is(':checked');
+            
+            $('#pouch_custom_enabled_input').val(pouchEnabled ? '1' : '');
+            $('#pouch_custom_name_input').val(pouchEnabled ? $('#pouchNameText').val() : '');
+            
+            $('#sajadah_custom_enabled_input').val(sajadahEnabled ? '1' : '');
+            $('#sajadah_custom_name_input').val(sajadahEnabled ? $('#sajadahNameText').val() : '');
+            
+            // Font style
+            var fontStyle = '';
+            if (pouchEnabled || sajadahEnabled) {
+                fontStyle = $('#fontStyleSelect').val();
+            }
+            $('#font_style_input').val(fontStyle);
+            
+            // Log form data for debugging
+            console.log('Form submission data:', {
+                product_id: $('input[name="product_id"]').val(),
+                color_id: $('#selected_color_id').val(),
+                size_id: $('#selected_size_id').val(),
+                quantity: $('#quantity').val(),
+                pouch_custom_enabled: $('#pouch_custom_enabled_input').val(),
+                pouch_custom_name: $('#pouch_custom_name_input').val(),
+                sajadah_custom_enabled: $('#sajadah_custom_enabled_input').val(),
+                sajadah_custom_name: $('#sajadah_custom_name_input').val(),
+                font_style: $('#font_style_input').val()
+            });
+            
+            // Allow form to submit normally
+            return true;
+        });
+        
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            $('.alert').alert('close');
+        }, 5000);
     });
     </script>
     
