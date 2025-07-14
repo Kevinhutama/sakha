@@ -223,7 +223,7 @@ ob_start();
                 </td>
                 <td>
                     <div class="product-info">
-                        <h6><?php echo htmlspecialchars($product['name']); ?></h6>
+                        <h6><a href="../store/product-detail.php?slug=<?php echo htmlspecialchars($product['slug']); ?>" target="_blank" class="text-decoration-none"><?php echo htmlspecialchars($product['name']); ?></a></h6>
                         <small><?php echo htmlspecialchars(substr($product['short_description'], 0, 60)) . '...'; ?></small>
                     </div>
                 </td>

@@ -1,12 +1,160 @@
 <?php
-// No special database functionality needed for product detail page
-// This is a conversion from product-detail.html to product-detail.php with proper includes
-// Color selection and image loading will be handled by backend
+// Product Detail Page with Database Integration
+require_once '../admin/includes/config.php';
+
+// Get database connection
+$database = new Database();
+$db = $database->getConnection();
+
+// Get product ID or slug from URL
+$product_id = isset($_GET['id']) ? intval($_GET['id']) : 0;
+$product_slug = isset($_GET['slug']) ? $_GET['slug'] : '';
+$selected_color = isset($_GET['color']) ? trim($_GET['color']) : '';
+
+// Initialize variables
+$product = null;
+$colors = [];
+$sizes = [];
+$images = [];
+$categories = [];
+$selected_color_data = null;
+
+try {
+    // Query product by ID or slug
+    if ($product_id > 0) {
+        $query = "SELECT * FROM products WHERE id = ? AND status = 'active'";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$product_id]);
+    } elseif (!empty($product_slug)) {
+        $query = "SELECT * FROM products WHERE slug = ? AND status = 'active'";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$product_slug]);
+    } else {
+        // No product identifier provided
+        header('Location: shop.php');
+        exit();
+    }
+    
+    $product = $stmt->fetch(PDO::FETCH_ASSOC);
+    
+    // If product not found, redirect to shop
+    if (!$product) {
+        header('Location: shop.php');
+        exit();
+    }
+    
+    // Get product colors
+    $query = "SELECT * FROM product_colors WHERE product_id = ? AND status = 'active' ORDER BY id";
+    $stmt = $db->prepare($query);
+    $stmt->execute([$product['id']]);
+    $colors = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get product sizes
+    $query = "SELECT * FROM product_sizes WHERE product_id = ? AND status = 'active' ORDER BY id";
+    $stmt = $db->prepare($query);
+    $stmt->execute([$product['id']]);
+    $sizes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get product images (filtered by color if specified)
+    if (!empty($selected_color)) {
+        // First, get the color data to validate the color exists
+        $color_query = "SELECT * FROM product_colors WHERE product_id = ? AND (color_name = ? OR color_code = ?) AND status = 'active' LIMIT 1";
+        $color_stmt = $db->prepare($color_query);
+        $color_stmt->execute([$product['id'], $selected_color, $selected_color]);
+        $selected_color_data = $color_stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($selected_color_data) {
+            // Get images for the specific color
+            $query = "SELECT pi.* FROM product_images pi 
+                      JOIN product_colors pc ON pi.color_id = pc.id 
+                      WHERE pi.product_id = ? AND pc.id = ? AND pi.status = 'active' 
+                      ORDER BY pi.is_primary DESC, pi.id";
+            $stmt = $db->prepare($query);
+            $stmt->execute([$product['id'], $selected_color_data['id']]);
+            $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // If no images found for this color, fall back to all images
+            if (empty($images)) {
+                $query = "SELECT * FROM product_images WHERE product_id = ? AND status = 'active' ORDER BY is_primary DESC, id";
+                $stmt = $db->prepare($query);
+                $stmt->execute([$product['id']]);
+                $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            }
+        } else {
+            // Color not found, show all images
+            $query = "SELECT * FROM product_images WHERE product_id = ? AND status = 'active' ORDER BY is_primary DESC, id";
+            $stmt = $db->prepare($query);
+            $stmt->execute([$product['id']]);
+            $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+    } else {
+        // No color specified, show all images
+        $query = "SELECT * FROM product_images WHERE product_id = ? AND status = 'active' ORDER BY is_primary DESC, id";
+        $stmt = $db->prepare($query);
+        $stmt->execute([$product['id']]);
+        $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+    
+    // Get product categories
+    $query = "SELECT c.* FROM categories c 
+              JOIN product_categories pc ON c.id = pc.category_id 
+              WHERE pc.product_id = ? AND c.status = 'active' 
+              ORDER BY c.name";
+    $stmt = $db->prepare($query);
+    $stmt->execute([$product['id']]);
+    $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Update page title
+    $page_title = htmlspecialchars($product['name']) . ' - Sakha';
+    
+} catch (PDOException $e) {
+    // Log error and redirect to shop
+    error_log("Product detail error: " . $e->getMessage());
+    header('Location: shop.php');
+    exit();
+}
+
+// Function to format price
+function formatPrice($price) {
+    return 'RP ' . number_format($price, 0, ',', '.');
+}
+
+// Function to get primary image or default
+function getPrimaryImage($images) {
+    if (empty($images)) {
+        return 'images/products/default-product.jpg';
+    }
+    
+    foreach ($images as $image) {
+        if ($image['is_primary']) {
+            return $image['image_path'];
+        }
+    }
+    
+    return $images[0]['image_path'];
+}
+
+// Function to build URL with color parameter
+function buildColorUrl($color_name, $product_slug, $product_id) {
+    $params = [];
+    
+    if (!empty($product_slug)) {
+        $params['slug'] = $product_slug;
+    } elseif ($product_id > 0) {
+        $params['id'] = $product_id;
+    }
+    
+    if (!empty($color_name)) {
+        $params['color'] = $color_name;
+    }
+    
+    return 'product-detail.php?' . http_build_query($params);
+}
 ?>
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Sakha - Product Detail</title>
+    <title><?php echo $page_title; ?></title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -61,43 +209,36 @@
       <div class="container">
         <div class="row">
           <div class="col-lg-6">
+
             <div class="row product-preview">
                               <div class="swiper thumb-swiper col-3" style="position:relative; overflow-y: scroll;">
                   <div class="swiper-wrapper d-flex flex-wrap align-content-start" style="width: 100%; position:absolute;">
-                    <div class="swiper-slide">
-                      <img src="images/products/blossom - 1.webp" alt="" class="img-fluid">
-                    </div>
-                    <div class="swiper-slide">
-                      <img src="images/products/bolossom - 2.webp" alt="" class="img-fluid">
-                    </div>
-                    <div class="swiper-slide">
-                      <img src="images/products/premium - 1.webp" alt="" class="img-fluid">
-                    </div>
-                    <div class="swiper-slide">
-                      <img src="images/products/blossom - 1.webp" alt="" class="img-fluid">
-                    </div>
-                    <div class="swiper-slide">
-                      <img src="images/products/bolossom - 2.webp" alt="" class="img-fluid">
-                    </div>
+                    <?php if (!empty($images)): ?>
+                      <?php foreach ($images as $image): ?>
+                        <div class="swiper-slide">
+                          <img src="<?php echo htmlspecialchars($image['image_path']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-fluid">
+                        </div>
+                      <?php endforeach; ?>
+                    <?php else: ?>
+                      <div class="swiper-slide">
+                        <img src="images/products/default-product.jpg" alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-fluid">
+                      </div>
+                    <?php endif; ?>
                   </div>
                 </div>
                               <div class="swiper large-swiper overflow-hidden col-9">
                   <div class="swiper-wrapper">
-                    <div class="swiper-slide">
-                      <img src="images/products/blossom - 1.webp" alt="single-product" class="img-fluid">
-                    </div>
-                    <div class="swiper-slide">
-                      <img src="images/products/bolossom - 2.webp" alt="single-product" class="img-fluid">
-                    </div>
-                    <div class="swiper-slide">
-                      <img src="images/products/premium - 1.webp" alt="single-product" class="img-fluid">
-                    </div>
-                    <div class="swiper-slide">
-                      <img src="images/products/blossom - 1.webp" alt="single-product" class="img-fluid">
-                    </div>
-                    <div class="swiper-slide">
-                      <img src="images/products/bolossom - 2.webp" alt="single-product" class="img-fluid">
-                    </div>
+                    <?php if (!empty($images)): ?>
+                      <?php foreach ($images as $image): ?>
+                        <div class="swiper-slide">
+                          <img src="<?php echo htmlspecialchars($image['image_path']); ?>" alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-fluid">
+                        </div>
+                      <?php endforeach; ?>
+                    <?php else: ?>
+                      <div class="swiper-slide">
+                        <img src="images/products/default-product.jpg" alt="<?php echo htmlspecialchars($product['name']); ?>" class="img-fluid">
+                      </div>
+                    <?php endif; ?>
                   </div>
                 </div>
             </div>
@@ -105,61 +246,62 @@
           <div class="col-lg-6">
             <div class="product-info">
               <div class="element-header">
-                <h3 class="product-title my-3">Blossom Prayer Collection</h3>
+                <h3 class="product-title my-3"><?php echo htmlspecialchars($product['name']); ?></h3>
               </div>
               <div class="product-price my-3">
-                <span class="fs-1 text-primary">RP 100,000</span>
-                <del>RP 150,000</del>
+                <?php if ($product['discounted_price'] && $product['discounted_price'] < $product['price']): ?>
+                  <span class="fs-1 text-primary"><?php echo formatPrice($product['discounted_price']); ?></span>
+                  <del><?php echo formatPrice($product['price']); ?></del>
+                <?php else: ?>
+                  <span class="fs-1 text-primary"><?php echo formatPrice($product['price']); ?></span>
+                <?php endif; ?>
               </div>
-              <p>Beautiful handcrafted prayer mat made with premium materials. Perfect for daily prayers with elegant floral patterns that bring peace and tranquility to your spiritual moments.</p>
+              <p><?php echo htmlspecialchars($product['short_description'] ?? ''); ?></p>
               <hr>
               <div class="cart-wrap">
+                <?php if (!empty($colors)): ?>
                 <div class="color-options product-select my-3">
                   <div class="color-toggle" data-option-index="0">
                     <h4 class="item-title text-decoration-underline text-uppercase">Color:</h4>
                     <ul class="select-list list-unstyled d-flex mb-0">
-                      <li class="select-item me-3" data-val="Pink" title="Pink">
-                        <a href="#" class="color-swatch d-flex align-items-center">
-                          <span class="color-indicator me-2" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: #FF69B4; border: 2px solid #ddd;"></span>
-                          Pink
-                        </a>
-                      </li>
-                      <li class="select-item me-3" data-val="Blue" title="Blue">
-                        <a href="#" class="color-swatch d-flex align-items-center">
-                          <span class="color-indicator me-2" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: #4169E1; border: 2px solid #ddd;"></span>
-                          Blue
-                        </a>
-                      </li>
-                      <li class="select-item me-3" data-val="Green" title="Green">
-                        <a href="#" class="color-swatch d-flex align-items-center">
-                          <span class="color-indicator me-2" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: #228B22; border: 2px solid #ddd;"></span>
-                          Green
-                        </a>
-                      </li>
+                      <?php foreach ($colors as $index => $color): ?>
+                        <?php 
+                        $isSelected = (!empty($selected_color) && 
+                                     (strtolower($color['color_name']) === strtolower($selected_color) || 
+                                      strtolower($color['color_code']) === strtolower($selected_color)));
+                        $colorUrl = buildColorUrl($color['color_name'], $product_slug, $product_id);
+                        ?>
+                        <li class="select-item me-3 <?php echo $isSelected ? 'active' : ''; ?>" data-val="<?php echo htmlspecialchars($color['color_name']); ?>" title="<?php echo htmlspecialchars($color['color_name']); ?>">
+                          <a href="<?php echo htmlspecialchars($colorUrl); ?>" class="color-swatch d-flex align-items-center">
+                            <span class="color-indicator me-2" style="display: inline-block; width: 20px; height: 20px; border-radius: 50%; background-color: <?php echo htmlspecialchars($color['color_code']); ?>; border: 2px solid <?php echo $isSelected ? '#333' : '#ddd'; ?>;"></span>
+                            <?php echo htmlspecialchars($color['color_name']); ?>
+                          </a>
+                        </li>
+                      <?php endforeach; ?>
                     </ul>
                   </div>
                 </div>
+                <?php endif; ?>
+                <?php if (!empty($sizes)): ?>
                 <div class="swatch product-select" data-option-index="1">
                   <h4 class="item-title text-decoration-underline text-uppercase">Size:</h4>
                   <ul class="select-list list-unstyled d-flex mb-0">
-                    <li data-value="S" class="select-item me-3">
-                      <a href="#">Small</a>
-                    </li>
-                    <li data-value="M" class="select-item me-3">
-                      <a href="#">Medium</a>
-                    </li>
-                    <li data-value="L" class="select-item me-3">
-                      <a href="#">Large</a>
-                    </li>
+                    <?php foreach ($sizes as $size): ?>
+                      <li data-value="<?php echo htmlspecialchars($size['size_value']); ?>" class="select-item me-3">
+                        <a href="#"><?php echo htmlspecialchars($size['size_name']); ?></a>
+                      </li>
+                    <?php endforeach; ?>
                   </ul>
                 </div>
+                <?php endif; ?>
+                <?php if ($product['custom_name_enabled']): ?>
                 <div class="custom-name-pouch product-select my-3">
                   <h4 class="item-title text-decoration-underline text-uppercase">Custom Name</h4>
                   <div class="custom-name-option">
                     <div class="form-check mb-2">
                       <input class="form-check-input" type="checkbox" value="" id="enablePouchName">
                       <label class="form-check-label" for="enablePouchName">
-                        Add name to pouch (+RP 5,000)
+                        Add name to pouch (+<?php echo formatPrice($product['pouch_custom_price']); ?>)
                       </label>
                     </div>
                     <div class="custom-name-input" id="pouchNameInput" style="display: none;">
@@ -171,7 +313,7 @@
                     <div class="form-check mb-2">
                       <input class="form-check-input" type="checkbox" value="" id="enableSajadahName">
                       <label class="form-check-label" for="enableSajadahName">
-                        Add name to sajadah (+RP 5,000)
+                        Add name to sajadah (+<?php echo formatPrice($product['sajadah_custom_price']); ?>)
                       </label>
                     </div>
                     <div class="custom-name-input" id="sajadahNameInput" style="display: none;">
@@ -180,6 +322,7 @@
                     </div>
                   </div>
                 </div>
+                <?php endif; ?>
                
                 
                 <div class="product-quantity my-3">
@@ -214,23 +357,21 @@
                 <div class="meta-item d-flex mb-1">
                   <span class="text-uppercase me-2">SKU:</span>
                   <ul class="select-list list-unstyled d-flex mb-0">
-                    <li data-value="S" class="select-item">BPC001</li>
+                    <li data-value="S" class="select-item"><?php echo htmlspecialchars($product['slug']); ?></li>
                   </ul>
                 </div>
+                <?php if (!empty($categories)): ?>
                 <div class="meta-item d-flex mb-1">
                   <span class="text-uppercase me-2">Category:</span>
                   <ul class="select-list list-unstyled d-flex mb-0">
-                    <li data-value="S" class="select-item">
-                      <a href="#">Sajadah</a>,
-                    </li>
-                    <li data-value="S" class="select-item">
-                      <a href="#">Prayer Mat</a>,
-                    </li>
-                    <li data-value="S" class="select-item">
-                      <a href="#">Islamic</a>
-                    </li>
+                    <?php foreach ($categories as $index => $category): ?>
+                      <li data-value="<?php echo htmlspecialchars($category['slug']); ?>" class="select-item">
+                        <a href="shop.php?category=<?php echo htmlspecialchars($category['slug']); ?>"><?php echo htmlspecialchars($category['name']); ?></a><?php if ($index < count($categories) - 1): ?>,<?php endif; ?>
+                      </li>
+                    <?php endforeach; ?>
                   </ul>
                 </div>
+                <?php endif; ?>
                 
               </div>
             </div>
@@ -250,15 +391,13 @@
             </nav>
             <div class="tab-content" id="nav-tabContent">
               <div class="tab-pane fade active show" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
-                <p>Product Description</p>
-                <p>The Blossom Prayer Collection features beautifully handcrafted prayer mats made with premium materials. Each mat is carefully designed with elegant floral patterns that bring peace and tranquility to your spiritual moments. The soft texture and durable construction ensure comfort and longevity for daily use.</p>
-                <ul class="fw-light">
-                  <li>Premium quality materials for comfort and durability</li>
-                  <li>Beautiful floral patterns for spiritual ambiance</li>
-                  <li>Soft texture suitable for daily prayers</li>
-                  <li>Easy to clean and maintain</li>
-                </ul>
-                <p>Perfect for personal use or as a thoughtful gift for loved ones. The Blossom Prayer Collection represents the finest in Islamic prayer accessories, combining traditional craftsmanship with modern design sensibilities.</p>
+                <div class="product-description">
+                  <?php if (!empty($product['description'])): ?>
+                    <?php echo $product['description']; ?>
+                  <?php else: ?>
+                    <p>Product description not available.</p>
+                  <?php endif; ?>
+                </div>
               </div>
               
             </div>
@@ -594,6 +733,15 @@
         font-size: 12px;
         margin-top: 5px;
     }
+    
+    /* Color selection active state */
+    .color-options .select-item.active .color-swatch {
+        background-color: #f8f9fa;
+        border-radius: 4px;
+        padding: 4px 8px;
+    }
+    
+
     </style>
 
     <script src="js/jquery-1.11.0.min.js"></script>
