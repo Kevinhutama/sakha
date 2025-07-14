@@ -664,6 +664,7 @@ if (isset($_SESSION['form_data'])) {
                             <small class="text-muted">This will be the main image displayed on product listings</small>
                         </div>
                         <input type="file" class="form-control" id="primary_thumbnail" name="primary_thumbnail" accept="image/*" style="display: none;" onchange="handleThumbnailUpload(this, 'primary')">
+                        <input type="hidden" id="remove_primary_thumbnail" name="remove_primary_thumbnail" value="0">
                         <div id="primary_thumbnail_preview" class="thumbnail-preview mt-2" style="<?php echo !empty($form_data['primary_thumbnail']) ? 'display: block;' : 'display: none;'; ?>">
                             <img id="primary_thumbnail_image" class="thumbnail-image" alt="Primary thumbnail preview" src="<?php echo !empty($form_data['primary_thumbnail']) ? '../store/' . htmlspecialchars($form_data['primary_thumbnail']) : ''; ?>">
                             <button type="button" class="thumbnail-remove-btn" onclick="removeThumbnailPreview('primary')">×</button>
@@ -685,6 +686,7 @@ if (isset($_SESSION['form_data'])) {
                             <small class="text-muted">Optional: Shown on hover in product page</small>
                         </div>
                         <input type="file" class="form-control" id="secondary_thumbnail" name="secondary_thumbnail" accept="image/*" style="display: none;" onchange="handleThumbnailUpload(this, 'secondary')">
+                        <input type="hidden" id="remove_secondary_thumbnail" name="remove_secondary_thumbnail" value="0">
                         <div id="secondary_thumbnail_preview" class="thumbnail-preview mt-2" style="<?php echo !empty($form_data['secondary_thumbnail']) ? 'display: block;' : 'display: none;'; ?>">
                             <img id="secondary_thumbnail_image" class="thumbnail-image" alt="Secondary thumbnail preview" src="<?php echo !empty($form_data['secondary_thumbnail']) ? '../store/' . htmlspecialchars($form_data['secondary_thumbnail']) : ''; ?>">
                             <button type="button" class="thumbnail-remove-btn" onclick="removeThumbnailPreview('secondary')">×</button>
@@ -935,6 +937,12 @@ function handleThumbnailUpload(input, type) {
         return;
     }
     
+    // Reset removal flag when new file is uploaded
+    const removeFlag = document.getElementById('remove_' + type + '_thumbnail');
+    if (removeFlag) {
+        removeFlag.value = '0';
+    }
+    
     // Create preview
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -956,11 +964,17 @@ function handleThumbnailUpload(input, type) {
 function removeThumbnailPreview(type) {
     const preview = document.getElementById(type + '_thumbnail_preview');
     const input = document.getElementById(type + '_thumbnail');
+    const removeFlag = document.getElementById('remove_' + type + '_thumbnail');
     const uploadSection = input.parentElement.querySelector('.thumbnail-upload-section');
     
     // Clear input and hide preview
     input.value = '';
     preview.style.display = 'none';
+    
+    // Set removal flag (for backend processing)
+    if (removeFlag) {
+        removeFlag.value = '1';
+    }
     
     // Show upload section
     uploadSection.style.display = 'flex';
@@ -1166,6 +1180,12 @@ function handleThumbnailDrop(e) {
         
         if (imageFiles.length > 0) {
             const file = imageFiles[0]; // Only take the first image for thumbnails
+            
+            // Reset removal flag when new file is dropped
+            const removeFlag = document.getElementById('remove_' + thumbnailType + '_thumbnail');
+            if (removeFlag) {
+                removeFlag.value = '0';
+            }
             
             // Create a FileList-like object for the input
             const fileInput = document.getElementById(thumbnailType + '_thumbnail');

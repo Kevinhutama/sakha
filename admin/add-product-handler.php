@@ -592,11 +592,15 @@ try {
         }
     }
     
+    // Handle thumbnail removal flags
+    $removePrimaryThumbnail = isset($_POST['remove_primary_thumbnail']) && $_POST['remove_primary_thumbnail'] == '1';
+    $removeSecondaryThumbnail = isset($_POST['remove_secondary_thumbnail']) && $_POST['remove_secondary_thumbnail'] == '1';
+    
     // Save thumbnail information to database
-    if ($primaryThumbnailPath || $secondaryThumbnailPath) {
+    if ($primaryThumbnailPath || $secondaryThumbnailPath || $removePrimaryThumbnail || $removeSecondaryThumbnail) {
         if ($edit_mode) {
             // Check if thumbnail record exists
-            $checkThumbnailQuery = "SELECT id FROM product_thumbnails WHERE product_id = ?";
+            $checkThumbnailQuery = "SELECT id, primary_image, secondary_image FROM product_thumbnails WHERE product_id = ?";
             $checkThumbnailStmt = $db->prepare($checkThumbnailQuery);
             $checkThumbnailStmt->execute([$product_id]);
             $existingThumbnail = $checkThumbnailStmt->fetch();
@@ -606,14 +610,26 @@ try {
                 $updateFields = [];
                 $updateValues = [];
                 
+                // Handle primary thumbnail
                 if ($primaryThumbnailPath) {
+                    // New primary thumbnail uploaded
                     $updateFields[] = "primary_image = ?";
                     $updateValues[] = $primaryThumbnailPath;
+                } elseif ($removePrimaryThumbnail) {
+                    // Primary thumbnail should be removed
+                    $updateFields[] = "primary_image = ?";
+                    $updateValues[] = null;
                 }
                 
+                // Handle secondary thumbnail  
                 if ($secondaryThumbnailPath) {
+                    // New secondary thumbnail uploaded
                     $updateFields[] = "secondary_image = ?";
                     $updateValues[] = $secondaryThumbnailPath;
+                } elseif ($removeSecondaryThumbnail) {
+                    // Secondary thumbnail should be removed
+                    $updateFields[] = "secondary_image = ?";
+                    $updateValues[] = null;
                 }
                 
                 if (!empty($updateFields)) {
@@ -623,16 +639,20 @@ try {
                     $updateStmt->execute($updateValues);
                 }
             } else {
-                // Insert new thumbnail record
+                // Insert new thumbnail record (only if we have new uploads, not removals)
+                if ($primaryThumbnailPath || $secondaryThumbnailPath) {
+                    $insertThumbnailQuery = "INSERT INTO product_thumbnails (product_id, primary_image, secondary_image) VALUES (?, ?, ?)";
+                    $insertThumbnailStmt = $db->prepare($insertThumbnailQuery);
+                    $insertThumbnailStmt->execute([$product_id, $primaryThumbnailPath, $secondaryThumbnailPath]);
+                }
+            }
+        } else {
+            // Insert new thumbnail record for new product (only if we have uploads)
+            if ($primaryThumbnailPath || $secondaryThumbnailPath) {
                 $insertThumbnailQuery = "INSERT INTO product_thumbnails (product_id, primary_image, secondary_image) VALUES (?, ?, ?)";
                 $insertThumbnailStmt = $db->prepare($insertThumbnailQuery);
                 $insertThumbnailStmt->execute([$product_id, $primaryThumbnailPath, $secondaryThumbnailPath]);
             }
-        } else {
-            // Insert new thumbnail record for new product
-            $insertThumbnailQuery = "INSERT INTO product_thumbnails (product_id, primary_image, secondary_image) VALUES (?, ?, ?)";
-            $insertThumbnailStmt = $db->prepare($insertThumbnailQuery);
-            $insertThumbnailStmt->execute([$product_id, $primaryThumbnailPath, $secondaryThumbnailPath]);
         }
     }
     
