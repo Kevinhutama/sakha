@@ -11,11 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $database = new Database();
 $db = $database->getConnection();
 
-// Function to generate unique filename
-function generateUniqueFilename($originalName) {
-    $extension = pathinfo($originalName, PATHINFO_EXTENSION);
-    return uniqid() . '_' . time() . '.' . $extension;
-}
+
 
 // Function to generate slug from text
 function generateSlug($text) {
@@ -32,8 +28,8 @@ function generateSlug($text) {
     return $slug;
 }
 
-// Function to upload image
-function uploadImage($file, $targetDir) {
+// Function to upload image with color prefix and product-specific folder
+function uploadImage($file, $targetDir, $colorName = '', $productId = null) {
     $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
     $maxFileSize = 5 * 1024 * 1024; // 5MB
     
@@ -68,6 +64,11 @@ function uploadImage($file, $targetDir) {
         return ['success' => false, 'message' => 'File size too large. Maximum 5MB allowed. File size: ' . round($file['size'] / 1024 / 1024, 2) . 'MB'];
     }
     
+    // Create product-specific directory if productId is provided
+    if ($productId) {
+        $targetDir = $targetDir . '/' . $productId;
+    }
+    
     // Check if target directory exists and is writable
     if (!is_dir($targetDir)) {
         if (!mkdir($targetDir, 0755, true)) {
@@ -79,7 +80,10 @@ function uploadImage($file, $targetDir) {
         return ['success' => false, 'message' => 'Target directory is not writable: ' . $targetDir . ' (Check permissions)'];
     }
     
-    $uniqueFilename = generateUniqueFilename($file['name']);
+    // Generate filename with color prefix
+    $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+    $colorPrefix = $colorName ? sanitizeFilename($colorName) . '_' : '';
+    $uniqueFilename = $colorPrefix . uniqid() . '_' . time() . '.' . $extension;
     $targetPath = $targetDir . '/' . $uniqueFilename;
     
     // Additional check for file existence (shouldn't happen with unique filename, but just in case)
@@ -88,7 +92,9 @@ function uploadImage($file, $targetDir) {
     }
     
     if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-        return ['success' => true, 'filename' => $uniqueFilename, 'path' => 'images/products/' . $uniqueFilename];
+        // Return path relative to store directory
+        $relativePath = $productId ? 'images/products/' . $productId . '/' . $uniqueFilename : 'images/products/' . $uniqueFilename;
+        return ['success' => true, 'filename' => $uniqueFilename, 'path' => $relativePath];
     } else {
         // Get more specific error information
         $lastError = error_get_last();
@@ -96,6 +102,18 @@ function uploadImage($file, $targetDir) {
         
         return ['success' => false, 'message' => 'Failed to move uploaded file from ' . $file['tmp_name'] . ' to ' . $targetPath . '. Error: ' . $errorDetails];
     }
+}
+
+// Function to sanitize filename
+function sanitizeFilename($filename) {
+    // Remove special characters and spaces, replace with underscores
+    $filename = preg_replace('/[^a-zA-Z0-9]/', '_', $filename);
+    // Remove multiple underscores
+    $filename = preg_replace('/_+/', '_', $filename);
+    // Remove leading/trailing underscores
+    $filename = trim($filename, '_');
+    // Convert to lowercase
+    return strtolower($filename);
 }
 
 try {
@@ -265,8 +283,6 @@ try {
             $imagesByColorOrder[$colorOrder][] = $image;
         }
         
-        error_log("EDIT MODE: Found " . count($existingImages) . " existing images grouped by color order: " . json_encode(array_keys($imagesByColorOrder)));
-        
         // Clear existing colors AND images (we'll restore them after)
         $deleteColorsQuery = "DELETE FROM product_colors WHERE product_id = ?";
         $deleteColorsStmt = $db->prepare($deleteColorsQuery);
@@ -322,26 +338,9 @@ try {
                             ]);
                         }
                         
-                        error_log("EDIT MODE: Restored " . count($imagesByColorOrder[$i]) . " existing images for color $i (new color_id: $newColorId)");
                     }
                 }
             }
-        }
-        
-        // Update existing images with new color IDs (legacy approach - might not be needed now)
-        if (!empty($colorIdMapping)) {
-            error_log("EDIT MODE: Color ID mapping: " . json_encode($colorIdMapping));
-            
-            $updateImageColorQuery = "UPDATE product_images SET color_id = ? WHERE product_id = ? AND color_id = ?";
-            $updateImageColorStmt = $db->prepare($updateImageColorQuery);
-            
-            foreach ($colorIdMapping as $oldColorId => $newColorId) {
-                $updateImageColorStmt->execute([$newColorId, $product_id, $oldColorId]);
-                $affectedRows = $updateImageColorStmt->rowCount();
-                error_log("EDIT MODE: Updated $affectedRows images from color_id $oldColorId to $newColorId");
-            }
-        } else {
-            error_log("EDIT MODE: No color ID mapping created - this might be the problem!");
         }
     } else {
         // Insert product colors for new products
@@ -422,34 +421,19 @@ try {
         $imageQuery = "INSERT INTO product_images (product_id, color_id, image_path, alt_text, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?)";
         $imageStmt = $db->prepare($imageQuery);
         
-        // Debug: Log what we're about to process
-        error_log("EDIT MODE: Processing images for product_id: $product_id");
-        error_log("EDIT MODE: Color IDs after mapping: " . implode(', ', $colorIds));
-        error_log("EDIT MODE: Color names: " . implode(', ', $colorNames));
-        
-        // Debug: Check existing images before processing
-        $checkImagesQuery = "SELECT COUNT(*) as count FROM product_images WHERE product_id = ? AND status = 'active'";
-        $checkImagesStmt = $db->prepare($checkImagesQuery);
-        $checkImagesStmt->execute([$product_id]);
-        $imageCountBefore = $checkImagesStmt->fetchColumn();
-        error_log("EDIT MODE: Images before processing: $imageCountBefore");
+
         
         // Process images for each color
         for ($colorIndex = 0; $colorIndex < count($colorIds); $colorIndex++) {
             $colorId = $colorIds[$colorIndex];
             $colorImageFieldName = "color_images_" . $colorIndex;
             
-            error_log("EDIT MODE: Checking color $colorIndex (ID: $colorId) for field: $colorImageFieldName");
-            
             // Check if new images are uploaded for this color
             if (isset($_FILES[$colorImageFieldName]) && !empty($_FILES[$colorImageFieldName]['name'][0])) {
-                error_log("EDIT MODE: Found new images for color $colorIndex - WILL DELETE existing images");
-                
                 // Clear existing images for this color only
                 $deleteColorImagesStmt->execute([$product_id, $colorId]);
                 
                 $imageCount = count($_FILES[$colorImageFieldName]['name']);
-                error_log("EDIT MODE: Processing $imageCount new images for color $colorIndex");
                 
                 for ($i = 0; $i < $imageCount; $i++) {
                     if (!empty($_FILES[$colorImageFieldName]['name'][$i])) {
@@ -461,7 +445,7 @@ try {
                             'size' => $_FILES[$colorImageFieldName]['size'][$i]
                         ];
                         
-                        $uploadResult = uploadImage($file, $uploadDir);
+                        $uploadResult = uploadImage($file, $uploadDir, $colorNames[$colorIndex], $product_id);
                         
                         if ($uploadResult['success']) {
                             $is_primary = ($i === 0) ? 1 : 0; // First image is primary for this color
@@ -473,22 +457,14 @@ try {
                                 $is_primary,
                                 $i
                             ]);
-                            error_log("EDIT MODE: Inserted new image for color $colorIndex: " . $uploadResult['path']);
                         } else {
                             throw new Exception('Image upload failed for color ' . $colorNames[$colorIndex] . ': ' . $uploadResult['message']);
                         }
                     }
                 }
-            } else {
-                error_log("EDIT MODE: No new images for color $colorIndex - PRESERVING existing images");
             }
             // If no new images for this color, existing images are preserved
         }
-        
-        // Debug: Check images after processing
-        $checkImagesStmt->execute([$product_id]);
-        $imageCountAfter = $checkImagesStmt->fetchColumn();
-        error_log("EDIT MODE: Images after processing: $imageCountAfter");
         
     } else {
         // In create mode, insert all new images
@@ -513,7 +489,7 @@ try {
                             'size' => $_FILES[$colorImageFieldName]['size'][$i]
                         ];
                         
-                        $uploadResult = uploadImage($file, $uploadDir);
+                        $uploadResult = uploadImage($file, $uploadDir, $colorNames[$colorIndex], $product_id);
                         
                         if ($uploadResult['success']) {
                             $is_primary = ($i === 0) ? 1 : 0; // First image is primary for this color
@@ -622,7 +598,8 @@ try {
                     // Only store valid image files temporarily
                     $allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
                     if (in_array($file['type'], $allowedTypes) && $file['size'] <= 5 * 1024 * 1024) {
-                        $uniqueFilename = 'temp_' . generateUniqueFilename($file['name']);
+                        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                        $uniqueFilename = 'temp_' . uniqid() . '_' . time() . '.' . $extension;
                         $tempPath = $tempImageDir . '/' . $uniqueFilename;
                         
                         if (move_uploaded_file($file['tmp_name'], $tempPath)) {
