@@ -140,6 +140,7 @@ if (isset($_SESSION['form_data'])) {
 .container-fluid {
     max-width: none !important;
     width: 100% !important;
+    padding-top:60px !important;
 }
 
 .form-section {
@@ -1262,7 +1263,7 @@ function generateDefaultValues() {
 
 <?php
 $content = ob_get_clean();
-include 'includes/auth_layout.php';
+include 'includes/layout.php';
 
 // Clear form data from session after form is rendered
 if ($clear_form_data) {
