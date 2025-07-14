@@ -8,6 +8,7 @@ $db = $database->getConnection();
 
 // Initialize variables
 $products = [];
+$categories = [];
 $totalProducts = 0;
 $currentPage = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $productsPerPage = 5;
@@ -15,11 +16,68 @@ $totalPages = 0;
 $startResult = 0;
 $endResult = 0;
 
+// Get filter parameters
+$selectedCategory = isset($_GET['category']) ? trim($_GET['category']) : '';
+$searchQuery = isset($_GET['search']) ? trim($_GET['search']) : '';
+$minPrice = isset($_GET['min_price']) ? max(0, floatval($_GET['min_price'])) : 0;
+$maxPrice = isset($_GET['max_price']) ? floatval($_GET['max_price']) : 0;
+
 try {
-    // Get total count of active products
-    $countQuery = "SELECT COUNT(*) as total FROM products WHERE status = 'active'";
+    // Get all active categories
+    $categoryQuery = "SELECT * FROM categories WHERE status = 'active' ORDER BY name";
+    $categoryStmt = $db->prepare($categoryQuery);
+    $categoryStmt->execute();
+    $categories = $categoryStmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Get min and max prices for the price slider
+    $priceQuery = "SELECT MIN(COALESCE(discounted_price, price)) as min_price, 
+                          MAX(COALESCE(discounted_price, price)) as max_price 
+                   FROM products WHERE status = 'active'";
+    $priceStmt = $db->prepare($priceQuery);
+    $priceStmt->execute();
+    $priceRange = $priceStmt->fetch(PDO::FETCH_ASSOC);
+    $globalMinPrice = $priceRange['min_price'] ?? 0;
+    $globalMaxPrice = $priceRange['max_price'] ?? 1000000;
+    
+    // Set default max price if not provided
+    if ($maxPrice == 0) {
+        $maxPrice = $globalMaxPrice;
+    }
+    
+    // Build WHERE clause for filters
+    $whereConditions = ["p.status = 'active'"];
+    $params = [];
+    
+    // Category filter
+    if (!empty($selectedCategory) && $selectedCategory !== 'all') {
+        $whereConditions[] = "EXISTS (SELECT 1 FROM product_categories pc 
+                                     JOIN categories c ON pc.category_id = c.id 
+                                     WHERE pc.product_id = p.id AND c.slug = ?)";
+        $params[] = $selectedCategory;
+    }
+    
+    // Search filter
+    if (!empty($searchQuery)) {
+        $whereConditions[] = "(p.name LIKE ? OR p.description LIKE ? OR p.short_description LIKE ?)";
+        $searchParam = '%' . $searchQuery . '%';
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+        $params[] = $searchParam;
+    }
+    
+    // Price filter
+    if ($minPrice > 0 || $maxPrice < $globalMaxPrice) {
+        $whereConditions[] = "COALESCE(p.discounted_price, p.price) BETWEEN ? AND ?";
+        $params[] = $minPrice;
+        $params[] = $maxPrice;
+    }
+    
+    $whereClause = implode(' AND ', $whereConditions);
+    
+    // Get total count of filtered products
+    $countQuery = "SELECT COUNT(*) as total FROM products p WHERE $whereClause";
     $countStmt = $db->prepare($countQuery);
-    $countStmt->execute();
+    $countStmt->execute($params);
     $totalProducts = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
     
     // Calculate pagination values
@@ -28,21 +86,22 @@ try {
     $startResult = $offset + 1;
     $endResult = min($offset + $productsPerPage, $totalProducts);
     
-    // Query to get products with thumbnails with pagination
+    // Query to get products with thumbnails with pagination and filters
     $query = "SELECT p.*, pt.primary_image, pt.secondary_image 
               FROM products p 
               LEFT JOIN product_thumbnails pt ON p.id = pt.product_id 
-              WHERE p.status = 'active' 
+              WHERE $whereClause 
               ORDER BY p.created_at DESC
               LIMIT $productsPerPage OFFSET $offset";
     
     $stmt = $db->prepare($query);
-    $stmt->execute();
+    $stmt->execute($params);
     $products = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
 } catch (PDOException $e) {
     error_log("Shop page error: " . $e->getMessage());
     $products = [];
+    $categories = [];
     $totalProducts = 0;
     $totalPages = 0;
 }
@@ -64,6 +123,10 @@ function getProductImage($imagePath) {
 function buildPaginationUrl($page) {
     $params = $_GET;
     $params['page'] = $page;
+    // Clean up empty parameters
+    $params = array_filter($params, function($value) {
+        return $value !== '' && $value !== null;
+    });
     return '?' . http_build_query($params);
 }
 ?>
@@ -138,6 +201,125 @@ function buildPaginationUrl($page) {
         opacity: 1;
         transition: opacity 0s;
       }
+      
+      /* Price Range Slider Styles */
+      .price-range-slider {
+        padding: 10px 0;
+      }
+      
+      .price-input-group {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .price-label {
+        font-size: 12px;
+        color: #666;
+        margin-bottom: 5px;
+      }
+      
+      .price-input {
+        width: 80px;
+        padding: 5px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 12px;
+        text-align: center;
+      }
+      
+      .slider-container {
+        position: relative;
+        margin: 20px 0;
+      }
+      
+      .price-slider {
+        height: 5px;
+        position: relative;
+        background: #ddd;
+        border-radius: 5px;
+      }
+      
+      .price-slider .progress {
+        height: 5px;
+        left: 0%;
+        right: 0%;
+        position: absolute;
+        border-radius: 5px;
+        background: #333;
+      }
+      
+      .range-input {
+        position: relative;
+      }
+      
+      .range-input input {
+        position: absolute;
+        width: 100%;
+        height: 5px;
+        top: -5px;
+        background: none;
+        pointer-events: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+      }
+      
+      .range-input input::-webkit-slider-thumb {
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background: #333;
+        pointer-events: auto;
+        -webkit-appearance: none;
+        box-shadow: 0 0 6px rgba(0,0,0,0.2);
+        cursor: pointer;
+      }
+      
+      .range-input input::-moz-range-thumb {
+        height: 20px;
+        width: 20px;
+        border-radius: 50%;
+        background: #333;
+        pointer-events: auto;
+        -moz-appearance: none;
+        box-shadow: 0 0 6px rgba(0,0,0,0.2);
+        cursor: pointer;
+        border: none;
+      }
+      
+      .price-display {
+        font-weight: bold;
+        color: #333;
+        font-size: 14px;
+      }
+      
+      /* Active category styling */
+      .product-categories .cat-item a.active {
+        color: #333;
+        font-weight: bold;
+        text-decoration: underline;
+      }
+      
+      .product-categories .cat-item a:hover {
+        color: #333;
+        text-decoration: underline;
+      }
+      
+      /* Active filters styling */
+      .active-filters {
+        padding: 10px 0;
+        border-top: 1px solid #eee;
+      }
+      
+      .active-filters .badge {
+        font-size: 11px;
+        padding: 4px 8px;
+      }
+      
+      .clear-filters {
+        font-size: 11px;
+        padding: 2px 8px;
+      }
     </style>
     
     <!-- script
@@ -180,6 +362,23 @@ function buildPaginationUrl($page) {
                   <p>Showing <?php echo $startResult; ?>-<?php echo $endResult; ?> of <?php echo $totalProducts; ?> results</p>
                 <?php else: ?>
                   <p>No products found</p>
+                <?php endif; ?>
+                
+                <!-- Active Filters Display -->
+                <?php if (!empty($selectedCategory) || !empty($searchQuery) || $minPrice > 0 || $maxPrice < $globalMaxPrice): ?>
+                  <div class="active-filters mt-2">
+                    <small class="text-muted">Active filters: </small>
+                    <?php if (!empty($selectedCategory)): ?>
+                      <span class="badge bg-secondary me-1">Category: <?php echo htmlspecialchars($selectedCategory); ?></span>
+                    <?php endif; ?>
+                    <?php if (!empty($searchQuery)): ?>
+                      <span class="badge bg-secondary me-1">Search: "<?php echo htmlspecialchars($searchQuery); ?>"</span>
+                    <?php endif; ?>
+                    <?php if ($minPrice > 0 || $maxPrice < $globalMaxPrice): ?>
+                      <span class="badge bg-secondary me-1">Price: RP <?php echo number_format($minPrice, 0, ',', '.'); ?> - RP <?php echo number_format($maxPrice, 0, ',', '.'); ?></span>
+                    <?php endif; ?>
+                    <a href="<?php echo basename($_SERVER['PHP_SELF']); ?>" class="btn btn-outline-secondary btn-sm ms-2 clear-filters">Clear All</a>
+                  </div>
                 <?php endif; ?>
               </div>
               <div class="sort-by">
@@ -314,13 +513,23 @@ function buildPaginationUrl($page) {
               <div class="widget-menu">
                 <div class="widget-search-bar">
                   <form role="search" method="get" class="position-relative d-flex justify-content-between align-items-center border-bottom border-dark py-1">
-                    <input class="search-field" placeholder="Search" type="search">
+                    <input class="search-field" name="search" placeholder="Search products..." type="search" value="<?php echo htmlspecialchars($searchQuery); ?>">
+                    <!-- Preserve other filters -->
+                    <?php if (!empty($selectedCategory)): ?>
+                      <input type="hidden" name="category" value="<?php echo htmlspecialchars($selectedCategory); ?>">
+                    <?php endif; ?>
+                    <?php if ($minPrice > 0): ?>
+                      <input type="hidden" name="min_price" value="<?php echo $minPrice; ?>">
+                    <?php endif; ?>
+                    <?php if ($maxPrice < $globalMaxPrice): ?>
+                      <input type="hidden" name="max_price" value="<?php echo $maxPrice; ?>">
+                    <?php endif; ?>
                     <div class="search-icon position-absolute end-0">
-                      <a href="#">
+                      <button type="submit" class="btn p-0 border-0 bg-transparent">
                         <svg width="26" height="26" class="search">
                           <use xlink:href="#search"></use>
                         </svg>
-                      </a>
+                      </button>
                     </div>
                   </form>
                 </div> 
@@ -329,42 +538,47 @@ function buildPaginationUrl($page) {
                 <h5 class="widget-title text-decoration-underline text-uppercase">Categories</h5>
                 <ul class="product-categories sidebar-list list-unstyled">
                   <li class="cat-item">
-                    <a href="/collections/categories">All</a>
+                    <a href="?<?php echo http_build_query(array_merge($_GET, ['category' => '', 'page' => 1])); ?>" 
+                       class="<?php echo empty($selectedCategory) ? 'active' : ''; ?>">All</a>
                   </li>
-                  <li class="cat-item">
-                    <a href="">Sajadah</a>
-                  </li>
-                  <li class="cat-item">
-                    <a href="">Al-Quran</a>
-                  </li>
-                  <li class="cat-item">
-                    <a href="">Perfume</a>
-                  </li>
-                  <li class="cat-item">
-                    <a href="">Prayer Beads</a>
-                  </li>
+                  <?php foreach ($categories as $category): ?>
+                    <li class="cat-item">
+                      <a href="?<?php echo http_build_query(array_merge($_GET, ['category' => $category['slug'], 'page' => 1])); ?>" 
+                         class="<?php echo ($selectedCategory === $category['slug']) ? 'active' : ''; ?>">
+                        <?php echo htmlspecialchars($category['name']); ?>
+                      </a>
+                    </li>
+                  <?php endforeach; ?>
                 </ul>
               </div>
               
               <div class="widget-price-filter pt-3">
                 <h5 class="widget-title text-decoration-underline text-uppercase">Filter By Price</h5>
-                <ul class="product-tags sidebar-list list-unstyled">
-                  <li class="tags-item">
-                    <a href="">Less than RP 100,000</a>
-                  </li>
-                  <li class="tags-item">
-                    <a href="">RP 100,000 - RP 200,000</a>
-                  </li>
-                  <li class="tags-item">
-                    <a href="">RP 200,000 - RP 300,000</a>
-                  </li>
-                  <li class="tags-item">
-                    <a href="">RP 300,000 - RP 400,000</a>
-                  </li>
-                  <li class="tags-item">
-                    <a href="">RP 400,000 - RP 500,000</a>
-                  </li>
-                </ul>
+                <div class="price-range-slider">
+                  <div class="price-input-wrapper d-flex justify-content-between mb-3">
+                    <div class="price-input-group">
+                      <span class="price-label">Min:</span>
+                      <input type="number" id="min-price" class="price-input" min="<?php echo $globalMinPrice; ?>" max="<?php echo $globalMaxPrice; ?>" value="<?php echo $minPrice; ?>">
+                    </div>
+                    <div class="price-input-group">
+                      <span class="price-label">Max:</span>
+                      <input type="number" id="max-price" class="price-input" min="<?php echo $globalMinPrice; ?>" max="<?php echo $globalMaxPrice; ?>" value="<?php echo $maxPrice; ?>">
+                    </div>
+                  </div>
+                  <div class="slider-container">
+                    <div class="price-slider">
+                      <div class="progress"></div>
+                    </div>
+                    <div class="range-input">
+                      <input type="range" class="range-min" min="<?php echo $globalMinPrice; ?>" max="<?php echo $globalMaxPrice; ?>" value="<?php echo $minPrice; ?>" step="1000">
+                      <input type="range" class="range-max" min="<?php echo $globalMinPrice; ?>" max="<?php echo $globalMaxPrice; ?>" value="<?php echo $maxPrice; ?>" step="1000">
+                    </div>
+                  </div>
+                  <div class="price-display mt-2 text-center">
+                    <span id="price-display">RP <?php echo number_format($minPrice, 0, ',', '.'); ?> - RP <?php echo number_format($maxPrice, 0, ',', '.'); ?></span>
+                  </div>
+                  <button type="button" class="btn btn-outline-dark btn-sm mt-2 w-100" id="apply-price-filter">Apply Filter</button>
+                </div>
               </div>
             </div>
           </aside>
@@ -391,6 +605,110 @@ function buildPaginationUrl($page) {
     <script type="text/javascript" src="js/bootstrap.bundle.min.js"></script>
     <script type="text/javascript" src="js/plugins.js"></script>
     <script type="text/javascript" src="js/script.js"></script>
+    
+    <script>
+    $(document).ready(function() {
+        // Price range slider functionality
+        const rangeMin = $('.range-min');
+        const rangeMax = $('.range-max');
+        const priceInputMin = $('#min-price');
+        const priceInputMax = $('#max-price');
+        const priceDisplay = $('#price-display');
+        const progress = $('.progress');
+        
+        const globalMin = <?php echo $globalMinPrice; ?>;
+        const globalMax = <?php echo $globalMaxPrice; ?>;
+        
+        function updateSlider() {
+            const minVal = parseInt(rangeMin.val());
+            const maxVal = parseInt(rangeMax.val());
+            
+            // Ensure min is not greater than max
+            if (minVal > maxVal) {
+                if ($(this).hasClass('range-min')) {
+                    rangeMin.val(maxVal);
+                } else {
+                    rangeMax.val(minVal);
+                }
+            }
+            
+            const minPercent = ((minVal - globalMin) / (globalMax - globalMin)) * 100;
+            const maxPercent = ((maxVal - globalMin) / (globalMax - globalMin)) * 100;
+            
+            progress.css('left', minPercent + '%');
+            progress.css('right', (100 - maxPercent) + '%');
+            
+            // Update input fields
+            priceInputMin.val(rangeMin.val());
+            priceInputMax.val(rangeMax.val());
+            
+            // Update display
+            priceDisplay.text('RP ' + parseInt(rangeMin.val()).toLocaleString('id-ID') + ' - RP ' + parseInt(rangeMax.val()).toLocaleString('id-ID'));
+        }
+        
+        function updateFromInputs() {
+            const minVal = parseInt(priceInputMin.val()) || globalMin;
+            const maxVal = parseInt(priceInputMax.val()) || globalMax;
+            
+            // Ensure values are within bounds
+            const boundedMin = Math.max(globalMin, Math.min(minVal, globalMax));
+            const boundedMax = Math.max(globalMin, Math.min(maxVal, globalMax));
+            
+            // Ensure min is not greater than max
+            if (boundedMin > boundedMax) {
+                priceInputMin.val(boundedMax);
+                priceInputMax.val(boundedMax);
+                rangeMin.val(boundedMax);
+                rangeMax.val(boundedMax);
+            } else {
+                priceInputMin.val(boundedMin);
+                priceInputMax.val(boundedMax);
+                rangeMin.val(boundedMin);
+                rangeMax.val(boundedMax);
+            }
+            
+            updateSlider();
+        }
+        
+        // Event listeners
+        rangeMin.on('input', updateSlider);
+        rangeMax.on('input', updateSlider);
+        priceInputMin.on('input', updateFromInputs);
+        priceInputMax.on('input', updateFromInputs);
+        
+        // Initialize slider
+        updateSlider();
+        
+        // Apply filter button
+        $('#apply-price-filter').click(function() {
+            const minPrice = parseInt(priceInputMin.val());
+            const maxPrice = parseInt(priceInputMax.val());
+            
+            // Get current URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            urlParams.set('min_price', minPrice);
+            urlParams.set('max_price', maxPrice);
+            urlParams.set('page', 1); // Reset to first page
+            
+            // Navigate to new URL
+            window.location.href = '?' + urlParams.toString();
+        });
+        
+        // Clear filters functionality
+        $('.clear-filters').click(function(e) {
+            e.preventDefault();
+            window.location.href = '<?php echo basename($_SERVER['PHP_SELF']); ?>';
+        });
+        
+        // Format number inputs
+        $('#min-price, #max-price').on('blur', function() {
+            const value = parseInt($(this).val());
+            if (isNaN(value)) {
+                $(this).val($(this).attr('min'));
+            }
+        });
+    });
+    </script>
     
     <?php include 'includes/auth-scripts.php'; ?>
   </body>
