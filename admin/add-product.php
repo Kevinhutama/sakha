@@ -75,30 +75,33 @@ if ($edit_mode && $product_id) {
                 $form_data['size_values'] = array_column($sizes, 'size_value');
             }
             
-            // Get product images grouped by color
-            $query = "SELECT pi.*, pc.color_name FROM product_images pi 
+            // Get product images grouped by color in the same order as colors
+            $query = "SELECT pi.*, pc.color_name, pc.sort_order as color_sort_order FROM product_images pi 
                       LEFT JOIN product_colors pc ON pi.color_id = pc.id 
                       WHERE pi.product_id = ? AND pi.status = 'active' 
-                      ORDER BY pc.id, pi.is_primary DESC, pi.id";
+                      ORDER BY pc.sort_order, pi.is_primary DESC, pi.id";
             $stmt = $db->prepare($query);
             $stmt->execute([$product_id]);
             $images = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Group images by color
+            // Group images by color index (matching the form structure)
             $form_data['color_images'] = [];
             if ($images) {
-                $color_images = [];
+                $color_images_by_order = [];
                 foreach ($images as $image) {
-                    $color_name = $image['color_name'] ?? 'default';
-                    if (!isset($color_images[$color_name])) {
-                        $color_images[$color_name] = [];
+                    $color_order = $image['color_sort_order'] ?? 0;
+                    if (!isset($color_images_by_order[$color_order])) {
+                        $color_images_by_order[$color_order] = [];
                     }
-                    $color_images[$color_name][] = [
+                    $color_images_by_order[$color_order][] = [
                         'path' => $image['image_path'],
                         'is_primary' => $image['is_primary']
                     ];
                 }
-                $form_data['color_images'] = array_values($color_images);
+                
+                // Convert to indexed array matching color order
+                ksort($color_images_by_order);
+                $form_data['color_images'] = array_values($color_images_by_order);
             }
         }
         

@@ -292,14 +292,6 @@ try {
     }
     
     // Handle product images
-    if ($edit_mode) {
-        // Clear existing images
-        $deleteImagesQuery = "DELETE FROM product_images WHERE product_id = ?";
-        $deleteImagesStmt = $db->prepare($deleteImagesQuery);
-        $deleteImagesStmt->execute([$product_id]);
-    }
-    
-    // Handle color-specific image uploads
     $uploadDir = '../store/images/products';
     
     // Create directory if it doesn't exist
@@ -316,47 +308,101 @@ try {
     }
     unlink($testFile); // Clean up test file
     
-    $imageQuery = "INSERT INTO product_images (product_id, color_id, image_path, alt_text, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?)";
-    $imageStmt = $db->prepare($imageQuery);
-    
     // Get color IDs that were just inserted
     $colorQuery = "SELECT id FROM product_colors WHERE product_id = ? ORDER BY sort_order";
     $colorStmt = $db->prepare($colorQuery);
     $colorStmt->execute([$product_id]);
     $colorIds = $colorStmt->fetchAll(PDO::FETCH_COLUMN);
     
-    // Process images for each color
-    for ($colorIndex = 0; $colorIndex < count($colorIds); $colorIndex++) {
-        $colorId = $colorIds[$colorIndex];
-        $colorImageFieldName = "color_images_" . $colorIndex;
+    if ($edit_mode) {
+        // In edit mode, only clear images for colors that have new uploads
+        // This preserves existing images for colors that don't have new uploads
+        $deleteColorImagesQuery = "DELETE FROM product_images WHERE product_id = ? AND color_id = ?";
+        $deleteColorImagesStmt = $db->prepare($deleteColorImagesQuery);
         
-        if (isset($_FILES[$colorImageFieldName]) && !empty($_FILES[$colorImageFieldName]['name'][0])) {
-            $imageCount = count($_FILES[$colorImageFieldName]['name']);
+        $imageQuery = "INSERT INTO product_images (product_id, color_id, image_path, alt_text, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?)";
+        $imageStmt = $db->prepare($imageQuery);
+        
+        // Process images for each color
+        for ($colorIndex = 0; $colorIndex < count($colorIds); $colorIndex++) {
+            $colorId = $colorIds[$colorIndex];
+            $colorImageFieldName = "color_images_" . $colorIndex;
             
-            for ($i = 0; $i < $imageCount; $i++) {
-                if (!empty($_FILES[$colorImageFieldName]['name'][$i])) {
-                    $file = [
-                        'name' => $_FILES[$colorImageFieldName]['name'][$i],
-                        'type' => $_FILES[$colorImageFieldName]['type'][$i],
-                        'tmp_name' => $_FILES[$colorImageFieldName]['tmp_name'][$i],
-                        'error' => $_FILES[$colorImageFieldName]['error'][$i],
-                        'size' => $_FILES[$colorImageFieldName]['size'][$i]
-                    ];
-                    
-                    $uploadResult = uploadImage($file, $uploadDir);
-                    
-                    if ($uploadResult['success']) {
-                        $is_primary = ($i === 0) ? 1 : 0; // First image is primary for this color
-                        $imageStmt->execute([
-                            $product_id,
-                            $colorId,
-                            $uploadResult['path'],
-                            $name . ' - ' . $colorNames[$colorIndex], // Use product name + color as alt text
-                            $is_primary,
-                            $i
-                        ]);
-                    } else {
-                        throw new Exception('Image upload failed for color ' . $colorNames[$colorIndex] . ': ' . $uploadResult['message']);
+            // Check if new images are uploaded for this color
+            if (isset($_FILES[$colorImageFieldName]) && !empty($_FILES[$colorImageFieldName]['name'][0])) {
+                // Clear existing images for this color only
+                $deleteColorImagesStmt->execute([$product_id, $colorId]);
+                
+                $imageCount = count($_FILES[$colorImageFieldName]['name']);
+                
+                for ($i = 0; $i < $imageCount; $i++) {
+                    if (!empty($_FILES[$colorImageFieldName]['name'][$i])) {
+                        $file = [
+                            'name' => $_FILES[$colorImageFieldName]['name'][$i],
+                            'type' => $_FILES[$colorImageFieldName]['type'][$i],
+                            'tmp_name' => $_FILES[$colorImageFieldName]['tmp_name'][$i],
+                            'error' => $_FILES[$colorImageFieldName]['error'][$i],
+                            'size' => $_FILES[$colorImageFieldName]['size'][$i]
+                        ];
+                        
+                        $uploadResult = uploadImage($file, $uploadDir);
+                        
+                        if ($uploadResult['success']) {
+                            $is_primary = ($i === 0) ? 1 : 0; // First image is primary for this color
+                            $imageStmt->execute([
+                                $product_id,
+                                $colorId,
+                                $uploadResult['path'],
+                                $name . ' - ' . $colorNames[$colorIndex], // Use product name + color as alt text
+                                $is_primary,
+                                $i
+                            ]);
+                        } else {
+                            throw new Exception('Image upload failed for color ' . $colorNames[$colorIndex] . ': ' . $uploadResult['message']);
+                        }
+                    }
+                }
+            }
+            // If no new images for this color, existing images are preserved
+        }
+    } else {
+        // In create mode, insert all new images
+        $imageQuery = "INSERT INTO product_images (product_id, color_id, image_path, alt_text, is_primary, sort_order) VALUES (?, ?, ?, ?, ?, ?)";
+        $imageStmt = $db->prepare($imageQuery);
+        
+        // Process images for each color
+        for ($colorIndex = 0; $colorIndex < count($colorIds); $colorIndex++) {
+            $colorId = $colorIds[$colorIndex];
+            $colorImageFieldName = "color_images_" . $colorIndex;
+            
+            if (isset($_FILES[$colorImageFieldName]) && !empty($_FILES[$colorImageFieldName]['name'][0])) {
+                $imageCount = count($_FILES[$colorImageFieldName]['name']);
+                
+                for ($i = 0; $i < $imageCount; $i++) {
+                    if (!empty($_FILES[$colorImageFieldName]['name'][$i])) {
+                        $file = [
+                            'name' => $_FILES[$colorImageFieldName]['name'][$i],
+                            'type' => $_FILES[$colorImageFieldName]['type'][$i],
+                            'tmp_name' => $_FILES[$colorImageFieldName]['tmp_name'][$i],
+                            'error' => $_FILES[$colorImageFieldName]['error'][$i],
+                            'size' => $_FILES[$colorImageFieldName]['size'][$i]
+                        ];
+                        
+                        $uploadResult = uploadImage($file, $uploadDir);
+                        
+                        if ($uploadResult['success']) {
+                            $is_primary = ($i === 0) ? 1 : 0; // First image is primary for this color
+                            $imageStmt->execute([
+                                $product_id,
+                                $colorId,
+                                $uploadResult['path'],
+                                $name . ' - ' . $colorNames[$colorIndex], // Use product name + color as alt text
+                                $is_primary,
+                                $i
+                            ]);
+                        } else {
+                            throw new Exception('Image upload failed for color ' . $colorNames[$colorIndex] . ': ' . $uploadResult['message']);
+                        }
                     }
                 }
             }
