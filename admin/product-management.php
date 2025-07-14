@@ -8,7 +8,7 @@ $page_title = "Product Management - MaterialM Admin";
 $database = new Database();
 $db = $database->getConnection();
 
-// Get all products with their categories and colors (excluding deleted products)
+// Get all products with their categories and colors (all products for now)
 $query = "SELECT p.*, 
                  GROUP_CONCAT(DISTINCT c.name ORDER BY c.name SEPARATOR ', ') as categories,
                  GROUP_CONCAT(DISTINCT CONCAT(pc.color_name, ':', pc.color_code) ORDER BY pc.sort_order SEPARATOR ', ') as colors,
@@ -18,7 +18,6 @@ $query = "SELECT p.*,
           LEFT JOIN categories c ON pc_rel.category_id = c.id
           LEFT JOIN product_colors pc ON p.id = pc.product_id AND pc.status = 'active'
           LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = 1
-          WHERE p.status != 'deleted'
           GROUP BY p.id
           ORDER BY p.created_at DESC";
 
@@ -280,9 +279,9 @@ ob_start();
                 </td>
                 <td>
                     <div class="action-buttons">
-                        <button class="btn btn-sm btn-outline-primary" type="button" title="Edit Product">
+                        <a href="edit-product.php?id=<?php echo $product['id']; ?>" class="btn btn-sm btn-outline-primary" title="Edit Product">
                             <iconify-icon icon="solar:pen-bold"></iconify-icon>
-                        </button>
+                        </a>
                         <button class="btn btn-sm btn-outline-danger" type="button" title="Delete Product" onclick="deleteProduct(<?php echo $product['id']; ?>, '<?php echo htmlspecialchars($product['name'], ENT_QUOTES); ?>')">
                             <iconify-icon icon="solar:trash-bin-trash-bold"></iconify-icon>
                         </button>
@@ -431,13 +430,7 @@ function showMessage(type, message) {
 
 // Add button click handlers (without implementation)
 document.addEventListener('DOMContentLoaded', function() {
-    
-    // Edit buttons
-    document.querySelectorAll('.btn-outline-primary').forEach(btn => {
-        btn.addEventListener('click', function() {
-            alert('Edit Product functionality will be implemented here');
-        });
-    });
+    // Edit buttons are now links, no need for click handlers
 });
 </script>
 

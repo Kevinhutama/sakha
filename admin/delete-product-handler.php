@@ -37,16 +37,16 @@ try {
         throw new Exception('Product not found');
     }
     
-    if ($product['status'] === 'deleted') {
-        throw new Exception('Product is already deleted');
+    if ($product['status'] === 'inactive') {
+        throw new Exception('Product is already inactive');
     }
     
-    // Perform soft delete by updating status to 'deleted'
-    $deleteQuery = "UPDATE products SET status = 'deleted', updated_at = NOW() WHERE id = ?";
+    // Perform soft delete by updating status to 'inactive' (since 'deleted' may not be in ENUM)
+    $deleteQuery = "UPDATE products SET status = 'inactive', updated_at = NOW() WHERE id = ?";
     $deleteStmt = $db->prepare($deleteQuery);
     $deleteResult = $deleteStmt->execute([$product_id]);
     
-    if (!$deleteResult) {
+    if (!$deleteStmt) {
         throw new Exception('Failed to delete product');
     }
     
