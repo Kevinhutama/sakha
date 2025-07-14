@@ -63,11 +63,6 @@ function getCartCount($user_id = null, $session_id = null) {
         $stmt->execute($params);
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         
-        // Debug logging
-        error_log("Cart Query: " . $query);
-        error_log("Cart Params: " . print_r($params, true));
-        error_log("Cart Result: " . print_r($result, true));
-        
         return intval($result['total_items'] ?? 0);
     } catch (Exception $e) {
         error_log("Cart count error: " . $e->getMessage());
