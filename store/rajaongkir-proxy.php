@@ -9,9 +9,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
 }
 
+// Load credentials
+require_once 'config/credentials.php';
+
 // Rajaongkir API configuration
-$api_key = '2cfb97cdc7344be03623fe445fee4a09';
-$base_url = 'https://api.rajaongkir.com/starter';
+$api_key = RAJAONGKIR_API_KEY;
+$base_url = RAJAONGKIR_BASE_URL;
 
 // Get the action from the request
 $action = $_GET['action'] ?? '';

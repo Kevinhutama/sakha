@@ -174,26 +174,50 @@ $page_title = "Checkout - Sakha";
       <div id="loader"></div>
     </div>
     <?php include 'includes/navigation.php'; ?>
-    <section class="hero-section jarallax d-flex align-items-center justify-content-center padding-medium pb-5" style="background: url(images/hero-img.jpg) no-repeat;">
-      <div class="hero-content">
-        <div class="container">
-          <div class="row">
-            <div class="text-center padding-large no-padding-bottom">
-              <h1>Checkout</h1>
-              <div class="breadcrumbs">
-                <span class="item">
-                  <a href="index.php">Home ></a>
-                </span>
-                <span class="item">Checkout</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    
     <section class="shopify-cart checkout-wrap padding-large">
       <div class="container">
-        <form class="form-group" id="checkout-form">
+        
+        <!-- Success/Error Messages -->
+        <?php if (isset($_SESSION['checkout_success'])): ?>
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="fas fa-check-circle me-2"></i>
+            <?php echo $_SESSION['checkout_success']; unset($_SESSION['checkout_success']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['checkout_message'])): ?>
+          <div class="alert alert-info alert-dismissible fade show" role="alert">
+            <i class="fas fa-info-circle me-2"></i>
+            <?php echo $_SESSION['checkout_message']; unset($_SESSION['checkout_message']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['checkout_error'])): ?>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-circle me-2"></i>
+            <?php echo $_SESSION['checkout_error']; unset($_SESSION['checkout_error']); ?>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+        <?php endif; ?>
+        
+        <?php if (isset($_SESSION['checkout_errors'])): ?>
+          <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Please fix the following errors:</strong>
+            <ul class="mb-0 mt-2">
+              <?php foreach ($_SESSION['checkout_errors'] as $error): ?>
+                <li><?php echo $error; ?></li>
+              <?php endforeach; ?>
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+          </div>
+          <?php unset($_SESSION['checkout_errors']); ?>
+        <?php endif; ?>
+        
+        <form class="form-group" id="checkout-form" action="checkout-handler.php" method="POST">
           <div class="row d-flex flex-wrap">
             <div class="col-lg-7">
               <h3 class="pb-4">Billing Details</h3>
@@ -275,6 +299,18 @@ $page_title = "Checkout - Sakha";
                   <input type="text" id="zip" name="zip" class="w-100" placeholder="e.g. 12345">
                 </div>
 
+                <?php if ($isLoggedIn): ?>
+                <div class="py-3">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="save-address" name="save_address" value="1">
+                    <label class="form-check-label" for="save-address">
+                      <i class="fas fa-bookmark me-2"></i>Save this address for future orders
+                    </label>
+                    <small class="text-muted d-block mt-1">We'll remember this address to make your next checkout faster</small>
+                  </div>
+                </div>
+                <?php endif; ?>
+
                 <div class="py-3 courier-selection">
                   <label>Courier</label>
                   <div class="courier-display">
@@ -283,15 +319,11 @@ $page_title = "Checkout - Sakha";
                   </div>
                   <input type="hidden" id="courier" name="courier" value="jne">
                 </div>
+                
             
               </div>
             </div>
             <div class="col-lg-5">
-              <h3 class="pb-4">Additional Information</h3>
-              <div class="billing-details">
-                <label for="fname">Order notes (optional)</label>
-                <textarea class="w-100" placeholder="Notes about your order. Like special notes for delivery."></textarea>
-              </div>
               <div class="your-order mt-5">
                 <h3 class="pb-4">Your Order</h3>
                 
@@ -886,6 +918,75 @@ $page_title = "Checkout - Sakha";
                     console.log('Error: The Geolocation service failed.');
                 });
             }
+            
+            // Initialize event listeners after map is ready
+            initializeEventListeners();
+        }
+        
+        function createRedMarker(position, title = 'Your selected address') {
+            console.log('Creating marker at position:', position); // Debug log
+            console.log('Map object:', map); // Debug log
+            
+            const marker = new google.maps.Marker({
+                position: position,
+                map: map,
+                draggable: true,
+                title: title,
+                animation: google.maps.Animation.DROP
+            });
+            
+            console.log('Marker created:', marker); // Debug log
+            return marker;
+        }
+
+        function initializeEventListeners() {
+            console.log('Initializing event listeners...'); // Debug log
+            
+            // Handle manual address input with debouncing
+            let addressInputTimeout;
+            const addressInput = document.getElementById('map-search');
+            
+            if (addressInput) {
+                console.log('Address input element found, adding event listeners...'); // Debug log
+                
+                // Add input event listener for manual typing
+                addressInput.addEventListener('input', function() {
+                    const address = this.value.trim();
+                    console.log('Address input changed:', address); // Debug log
+                    
+                    // Clear previous timeout
+                    if (addressInputTimeout) {
+                        clearTimeout(addressInputTimeout);
+                    }
+                    
+                    // Set new timeout for geocoding
+                    if (address.length > 3) {
+                        console.log('Setting timeout for geocoding...'); // Debug log
+                        addressInputTimeout = setTimeout(function() {
+                            console.log('Geocoding address:', address); // Debug log
+                            geocodeAddressAndUpdateMap(address);
+                        }, 1500); // 1.5 second delay
+                    }
+                });
+                
+                // Also handle Enter key press for immediate geocoding
+                addressInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        const address = this.value.trim();
+                        if (address.length > 3) {
+                            console.log('Enter pressed, geocoding immediately:', address); // Debug log
+                            if (addressInputTimeout) {
+                                clearTimeout(addressInputTimeout);
+                            }
+                            geocodeAddressAndUpdateMap(address);
+                        }
+                        return false;
+                    }
+                });
+            } else {
+                console.error('map-search element not found!');
+            }
         }
 
         function onPlaceChanged() {
@@ -908,11 +1009,7 @@ $page_title = "Checkout - Sakha";
             if (marker) {
                 marker.setMap(null);
             }
-            marker = new google.maps.Marker({
-                position: place.geometry.location,
-                map: map,
-                draggable: true
-            });
+            marker = createRedMarker(place.geometry.location, 'Your selected address');
 
             // Make marker draggable and update address on drag
             marker.addListener('dragend', function() {
@@ -930,11 +1027,7 @@ $page_title = "Checkout - Sakha";
             }
 
             // Add new marker
-            marker = new google.maps.Marker({
-                position: latLng,
-                map: map,
-                draggable: true
-            });
+            marker = createRedMarker(latLng, 'Your selected address');
 
             // Make marker draggable
             marker.addListener('dragend', function() {
@@ -985,24 +1078,7 @@ $page_title = "Checkout - Sakha";
                         document.getElementById('zip').value = component.long_name;
                     }
                     
-                    if (types.includes('administrative_area_level_1')) {
-                        // Update province dropdown if needed
-                        const provinceSelect = document.getElementById('province');
-                        const provinceName = component.long_name;
-                        
-                        if (provinceSelect) {
-                            // Try to find matching option in dropdown
-                            for (let option of provinceSelect.options) {
-                                if (option.text.toLowerCase().includes(provinceName.toLowerCase()) || 
-                                    option.text.toLowerCase().includes(component.short_name.toLowerCase())) {
-                                    option.selected = true;
-                                    // Trigger change event to load cities
-                                    provinceSelect.dispatchEvent(new Event('change'));
-                                    break;
-                                }
-                            }
-                        }
-                    }
+                    // Note: Removed automatic province/city update to prevent overriding user selections
                 });
             }
 
@@ -1054,39 +1130,121 @@ $page_title = "Checkout - Sakha";
             'Sumatera Utara': {lat: 2.1153547, lng: 99.5450974}
         };
 
-        // Handle province selection
+        // Handle province selection (field reset only)
         document.getElementById('province').addEventListener('change', function() {
             const selectedProvince = this.value;
-            if (selectedProvince && provinceCoordinates[selectedProvince]) {
-                const coordinates = provinceCoordinates[selectedProvince];
-                
-                // Center map on selected province
-                map.setCenter(coordinates);
-                map.setZoom(8); // Appropriate zoom level for province view
-                
-                // Clear existing address search
+            if (selectedProvince) {
+                // Reset city and address fields
+                document.getElementById('city').value = '';
+                document.getElementById('city').innerHTML = '<option selected="" hidden="">Select City</option>';
                 document.getElementById('map-search').value = '';
+                document.getElementById('adr2').value = '';
                 
                 // Remove existing marker
                 if (marker) {
                     marker.setMap(null);
                 }
                 
-                // Update autocomplete bounds to focus on selected province
-                const bounds = new google.maps.LatLngBounds();
-                const center = new google.maps.LatLng(coordinates.lat, coordinates.lng);
-                bounds.extend(center);
-                
-                // Expand bounds for better autocomplete results
-                const offset = 0.5; // degrees
-                bounds.extend(new google.maps.LatLng(coordinates.lat + offset, coordinates.lng + offset));
-                bounds.extend(new google.maps.LatLng(coordinates.lat - offset, coordinates.lng - offset));
-                
-                if (autocomplete) {
+                // Update autocomplete bounds to focus on selected province (keep this for better autocomplete results)
+                if (provinceCoordinates[selectedProvince] && autocomplete) {
+                    const coordinates = provinceCoordinates[selectedProvince];
+                    const bounds = new google.maps.LatLngBounds();
+                    const center = new google.maps.LatLng(coordinates.lat, coordinates.lng);
+                    bounds.extend(center);
+                    
+                    // Expand bounds for better autocomplete results
+                    const offset = 0.5; // degrees
+                    bounds.extend(new google.maps.LatLng(coordinates.lat + offset, coordinates.lng + offset));
+                    bounds.extend(new google.maps.LatLng(coordinates.lat - offset, coordinates.lng - offset));
+                    
                     autocomplete.setBounds(bounds);
                 }
             }
         });
+
+        // Handle city selection (field reset only)
+        document.getElementById('city').addEventListener('change', function() {
+            const selectedCity = this.value;
+            if (selectedCity) {
+                // Reset address fields
+                document.getElementById('map-search').value = '';
+                document.getElementById('adr2').value = '';
+                
+                // Remove existing marker
+                if (marker) {
+                    marker.setMap(null);
+                }
+            }
+        });
+
+
+
+
+
+        function geocodeAddressAndUpdateMap(address) {
+            console.log('geocodeAddressAndUpdateMap called with:', address); // Debug log
+            
+            if (!geocoder) {
+                console.error('Geocoder not initialized!');
+                return;
+            }
+            
+            if (!map) {
+                console.error('Map not initialized!');
+                return;
+            }
+            
+            const selectedProvince = document.getElementById('province').value;
+            const selectedCity = document.getElementById('city').value;
+            
+            // Build more specific search query
+            let searchQuery = address;
+            if (selectedCity) {
+                searchQuery += `, ${selectedCity}`;
+            }
+            if (selectedProvince) {
+                searchQuery += `, ${selectedProvince}`;
+            }
+            searchQuery += ', Indonesia';
+            
+            console.log('Geocoding search query:', searchQuery); // Debug log
+            
+            geocoder.geocode({address: searchQuery}, function(results, status) {
+                console.log('Geocoding results:', status, results); // Debug log
+                
+                if (status === 'OK' && results[0]) {
+                    const location = results[0].geometry.location;
+                    console.log('Found location:', location.lat(), location.lng()); // Debug log
+                    
+                    // Center map on address
+                    map.setCenter(location);
+                    map.setZoom(16); // Appropriate zoom level for address view
+                    
+                    // Place marker at the address
+                    if (marker) {
+                        marker.setMap(null);
+                    }
+                    
+                    marker = createRedMarker(location, 'Your selected address');
+                    
+                    // Make marker draggable
+                    marker.addListener('dragend', function() {
+                        updateAddressFromLatLng(marker.getPosition());
+                    });
+                    
+                    // Update form fields with geocoded result
+                    updateFormFields(results[0]);
+                    
+                    console.log('Map updated successfully!'); // Debug log
+                    
+                } else {
+                    console.error('Geocode was not successful for the following reason: ' + status);
+                    if (results) {
+                        console.error('Results:', results);
+                    }
+                }
+            });
+        }
 
         // Prevent form submission on Enter key press
         document.getElementById('checkout-form').addEventListener('keydown', function(e) {

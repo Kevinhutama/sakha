@@ -4,6 +4,9 @@ header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type');
 
+// Load credentials
+require_once 'config/credentials.php';
+
 // Handle preflight requests
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit(0);
@@ -81,8 +84,8 @@ if ($action === 'provinces') {
     }
     
     // Use Rajaongkir API for cost calculation
-    $api_key = '2cfb97cdc7344be03623fe445fee4a09';
-    $base_url = 'https://api.rajaongkir.com/starter';
+    $api_key = RAJAONGKIR_API_KEY;
+    $base_url = RAJAONGKIR_BASE_URL;
     
     $url = "$base_url/cost";
     $data = [

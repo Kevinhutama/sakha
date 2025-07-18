@@ -1,5 +1,7 @@
 <?php
 // Test script for Rajaongkir API integration
+require_once 'config/credentials.php';
+
 echo "<h2>Rajaongkir API Test</h2>";
 
 // Test 1: Test proxy endpoint
@@ -98,8 +100,8 @@ echo "<pre>$costResponse</pre>";
 
 // Test 6: Direct API test (for comparison)
 echo "<h3>Test 6: Direct API Test</h3>";
-$api_key = '2cfb97cdc7344be03623fe445fee4a09';
-$base_url = 'https://api.rajaongkir.com/starter';
+$api_key = RAJAONGKIR_API_KEY;
+$base_url = RAJAONGKIR_BASE_URL;
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, "$base_url/cost");

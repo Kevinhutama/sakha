@@ -14,9 +14,12 @@ echo "Available memory: " . ini_get('memory_limit') . "<br>";
 echo "Available disk space: " . formatBytes(disk_free_space('.')) . "<br>";
 echo "<br>";
 
+// Load credentials
+require_once 'config/credentials.php';
+
 // API configuration
-$api_key = '2cfb97cdc7344be03623fe445fee4a09';
-$base_url = 'https://api.rajaongkir.com/starter';
+$api_key = RAJAONGKIR_API_KEY;
+$base_url = RAJAONGKIR_BASE_URL;
 
 // Step 1: Get all provinces
 echo "<h3>Step 1: Fetching Provinces...</h3>";
