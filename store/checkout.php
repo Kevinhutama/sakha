@@ -123,6 +123,16 @@ $page_title = "Checkout - Sakha";
         font-size: 14px;
       }
       
+      .courier-display {
+        padding: 10px 0;
+      }
+      
+      .courier-display .badge {
+        font-size: 0.875rem;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      
       .rajaongkir-error {
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         border-left: 4px solid #dc3545;
@@ -244,6 +254,13 @@ $page_title = "Checkout - Sakha";
                 </div>
 
                 <div class="py-3">
+                  <label for="city">City *</label>
+                  <select id="city" name="city" class="w-100" aria-label="Select City">
+                    <option selected="" hidden="">Select City</option>
+                  </select>
+                </div>
+
+                <div class="py-3">
                   <label for="map-search">Street Address</label>
                   <input type="text" id="map-search" placeholder="Your address ..." class="w-100 mb-3">
                   
@@ -252,12 +269,6 @@ $page_title = "Checkout - Sakha";
                   <small class="text-muted">Click on the map to select your address. You can also drag the marker to fine-tune your location.</small>
                 </div>
 
-                <div class="py-3">
-                  <label for="city">City *</label>
-                  <select id="city" name="city" class="w-100" aria-label="Select City">
-                    <option selected="" hidden="">Select City</option>
-                  </select>
-                </div>
 
                 <div class="py-3">
                   <label for="zip">Postal Code *</label>
@@ -265,12 +276,12 @@ $page_title = "Checkout - Sakha";
                 </div>
 
                 <div class="py-3 courier-selection">
-                  <label for="courier">Preferred Courier *</label>
-                  <select id="courier" name="courier" class="w-100" aria-label="Select Courier">
-                    <option selected="" hidden="">Select Courier</option>
-                    <option value="jne">JNE</option>
-                    <option value="jnt">JNT</option>
-                  </select>
+                  <label>Courier</label>
+                  <div class="courier-display">
+                    <span class="badge bg-primary fs-6 py-2 px-3">JNE Regular</span>
+                    <small class="text-muted d-block mt-1">All shipments will be handled by JNE Regular service</small>
+                  </div>
+                  <input type="hidden" id="courier" name="courier" value="jne">
                 </div>
             
               </div>
@@ -363,7 +374,7 @@ $page_title = "Checkout - Sakha";
                         <th>Shipping Cost</th>
                         <td data-title="Shipping Cost">
                           <div id="shipping-options">
-                            <div class="text-muted">Please select city and courier to calculate shipping cost</div>
+                            <div class="text-muted">Please select city to calculate JNE Regular shipping cost</div>
                           </div>
                         </td>
                       </tr>
@@ -536,7 +547,8 @@ $page_title = "Checkout - Sakha";
     <!-- Rajaongkir Integration -->
     <script>
         // Configuration
-        const PROXY_URL = 'rajaongkir-proxy.php';
+        const LOCAL_CITIES_PROXY = 'local-cities-proxy.php';
+        const RAJAONGKIR_PROXY = 'rajaongkir-proxy.php';
         
         let subtotalAmount = <?php echo $total; ?>;
         let selectedShippingCost = 0;
@@ -563,28 +575,11 @@ $page_title = "Checkout - Sakha";
         // Calculate shipping when city is selected
         document.getElementById('city').addEventListener('change', function() {
             const selectedCity = this.value;
-            const selectedCourier = document.getElementById('courier').value;
+            const selectedCourier = 'jne'; // Always use JNE
             clearErrorMessages(); // Clear any previous errors
             
-            if (selectedCity && selectedCourier) {
+            if (selectedCity) {
                 calculateShipping(selectedCity, selectedCourier);
-            } else if (selectedCity || selectedCourier) {
-                showShippingMessage();
-            } else {
-                hideShippingOptions();
-            }
-        });
-        
-        // Calculate shipping when courier is selected
-        document.getElementById('courier').addEventListener('change', function() {
-            const selectedCourier = this.value;
-            const selectedCity = document.getElementById('city').value;
-            clearErrorMessages(); // Clear any previous errors
-            
-            if (selectedCity && selectedCourier) {
-                calculateShipping(selectedCity, selectedCourier);
-            } else if (selectedCity || selectedCourier) {
-                showShippingMessage();
             } else {
                 hideShippingOptions();
             }
@@ -594,8 +589,8 @@ $page_title = "Checkout - Sakha";
             const citySelect = document.getElementById('city');
             citySelect.innerHTML = '<option selected="" hidden="">Loading cities...</option>';
             
-            // First, get province ID
-            fetch(`${PROXY_URL}?action=provinces`)
+            // Load cities directly from local data using province name
+            fetch(`${LOCAL_CITIES_PROXY}?action=cities&province_name=${encodeURIComponent(provinceName)}`)
                 .then(response => {
                     if (!response.ok) {
                         throw new Error(`HTTP error! status: ${response.status}`);
@@ -608,61 +603,28 @@ $page_title = "Checkout - Sakha";
                     }
                     
                     if (data.rajaongkir && data.rajaongkir.status.code === 200) {
-                        const provinces = data.rajaongkir.results;
-                        const province = provinces.find(p => p.province.toLowerCase() === provinceName.toLowerCase());
+                        const cities = data.rajaongkir.results;
                         
-                        if (province) {
-                            // Load cities for this province
-                            fetch(`${PROXY_URL}?action=cities&province_id=${province.province_id}`)
-                                .then(response => {
-                                    if (!response.ok) {
-                                        throw new Error(`HTTP error! status: ${response.status}`);
-                                    }
-                                    return response.json();
-                                })
-                                .then(data => {
-                                    if (data.error) {
-                                        throw new Error(data.error);
-                                    }
-                                    
-                                    if (data.rajaongkir && data.rajaongkir.status.code === 200) {
-                                        const cities = data.rajaongkir.results;
-                                        
-                                        citySelect.innerHTML = '<option selected="" hidden="">Select City</option>';
-                                        cities.forEach(city => {
-                                            const option = document.createElement('option');
-                                            option.value = city.city_id;
-                                            option.text = `${city.type} ${city.city_name}`;
-                                            citySelect.appendChild(option);
-                                        });
-                                    } else {
-                                        const errorMsg = data.rajaongkir ? data.rajaongkir.status.description : 'Unknown API error';
-                                        console.error('Failed to load cities:', errorMsg);
-                                        citySelect.innerHTML = `<option selected="" hidden="">Error: ${errorMsg}</option>`;
-                                        showErrorMessage(`Failed to load cities: ${errorMsg}`);
-                                    }
-                                })
-                                .catch(error => {
-                                    console.error('Error loading cities:', error);
-                                    citySelect.innerHTML = `<option selected="" hidden="">Error: ${error.message}</option>`;
-                                    showErrorMessage(`Error loading cities: ${error.message}`);
-                                });
-                        } else {
-                            console.error('Province not found:', provinceName);
-                            citySelect.innerHTML = '<option selected="" hidden="">Province not found</option>';
-                            showErrorMessage(`Province "${provinceName}" not found in Rajaongkir database`);
-                        }
+                        citySelect.innerHTML = '<option selected="" hidden="">Select City</option>';
+                        cities.forEach(city => {
+                            const option = document.createElement('option');
+                            option.value = city.city_id;
+                            option.text = `${city.type} ${city.city_name}`;
+                            citySelect.appendChild(option);
+                        });
+                        
+                        console.log(`Loaded ${cities.length} cities for ${provinceName} from local data`);
                     } else {
-                        const errorMsg = data.rajaongkir ? data.rajaongkir.status.description : 'Unknown API error';
-                        console.error('Failed to load provinces:', errorMsg);
+                        const errorMsg = data.rajaongkir ? data.rajaongkir.status.description : 'Unknown error';
+                        console.error('Failed to load cities:', errorMsg);
                         citySelect.innerHTML = `<option selected="" hidden="">Error: ${errorMsg}</option>`;
-                        showErrorMessage(`Failed to load provinces: ${errorMsg}`);
+                        showErrorMessage(`Failed to load cities: ${errorMsg}`);
                     }
                 })
                 .catch(error => {
-                    console.error('Error loading provinces:', error);
+                    console.error('Error loading cities:', error);
                     citySelect.innerHTML = `<option selected="" hidden="">Error: ${error.message}</option>`;
-                    showErrorMessage(`Error loading provinces: ${error.message}`);
+                    showErrorMessage(`Error loading cities: ${error.message}`);
                 });
         }
         
@@ -703,7 +665,7 @@ $page_title = "Checkout - Sakha";
                 courier: courier.toLowerCase()
             });
             
-            return fetch(`${PROXY_URL}?action=cost`, {
+            return fetch(`${RAJAONGKIR_PROXY}?action=cost`, {
                 method: 'POST',
                 body: formData
             })
@@ -745,19 +707,22 @@ $page_title = "Checkout - Sakha";
             const result = shippingResults[0]; // Since we're only showing one courier now
             
             if (result && result.services.length > 0) {
-                html += `<div class="mb-3">
-                    <h6 class="text-primary mb-3">${result.courier} Shipping Options</h6>`;
+                // Filter to only show REG service
+                const regService = result.services.find(service => service.service === 'REG');
                 
-                result.services.forEach(service => {
-                    const cost = service.cost[0];
-                    html += `<div class="shipping-option mb-2">
+                if (regService) {
+                    html += `<div class="mb-3">
+                        <h6 class="text-primary mb-3">JNE Regular Shipping</h6>`;
+                    
+                    const cost = regService.cost[0];
+                    html += `<div class="shipping-option mb-2 selected">
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="shipping" id="shipping_${result.courier.toLowerCase()}_${service.service}" value="${cost.value}" data-courier="${result.courier}" data-service="${service.service}" data-etd="${cost.etd}">
-                            <label class="form-check-label w-100" for="shipping_${result.courier.toLowerCase()}_${service.service}">
+                            <input class="form-check-input" type="radio" name="shipping" id="shipping_jne_reg" value="${cost.value}" data-courier="JNE" data-service="REG" data-etd="${cost.etd}" checked>
+                            <label class="form-check-label w-100" for="shipping_jne_reg">
                                 <div class="d-flex justify-content-between align-items-center">
                                     <div>
-                                        <div class="fw-bold">${service.service}</div>
-                                        <div class="text-muted small">${service.description}</div>
+                                        <div class="fw-bold">JNE Regular</div>
+                                        <div class="text-muted small">${regService.description}</div>
                                         <div class="text-success small">
                                             <i class="fas fa-clock"></i> Estimasi: ${cost.etd} hari
                                         </div>
@@ -769,27 +734,36 @@ $page_title = "Checkout - Sakha";
                             </label>
                         </div>
                     </div>`;
-                });
-                
-                html += '</div>';
+                    
+                    html += '</div>';
+                    
+                    // Auto-select and set the shipping cost
+                    selectedShippingCost = parseInt(cost.value);
+                    updateTotal();
+                } else {
+                    html = `<div class="text-warning">
+                        <i class="fas fa-exclamation-triangle"></i> 
+                        JNE Regular service not available for this destination
+                    </div>`;
+                    
+                    // Show error message
+                    showErrorMessage(`JNE Regular service not available for this destination`);
+                }
             } else {
-                const courierName = result ? result.courier : 'selected courier';
                 html = `<div class="text-warning">
                     <i class="fas fa-exclamation-triangle"></i> 
-                    No shipping options available for this destination with ${courierName}
+                    No JNE shipping options available for this destination
                 </div>`;
                 
                 // Show error message
-                if (result) {
-                    showErrorMessage(`${result.courier} does not provide shipping services to this destination`);
-                }
+                showErrorMessage(`JNE does not provide shipping services to this destination`);
             }
             
             html += '</div>';
             
             document.getElementById('shipping-options').innerHTML = html;
             
-            // Add event listeners to shipping options
+            // Add event listeners to shipping options (though there's only one now)
             document.querySelectorAll('input[name="shipping"]').forEach(radio => {
                 radio.addEventListener('change', function() {
                     selectedShippingCost = parseInt(this.value);
@@ -812,7 +786,7 @@ $page_title = "Checkout - Sakha";
         
         function showShippingMessage() {
             document.getElementById('shipping-row').style.display = 'table-row';
-            document.getElementById('shipping-options').innerHTML = '<div class="text-muted">Please select city and courier to calculate shipping cost</div>';
+            document.getElementById('shipping-options').innerHTML = '<div class="text-muted">Please select city to calculate JNE Regular shipping cost</div>';
             selectedShippingCost = 0;
             updateTotal();
         }

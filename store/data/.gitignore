@@ -1,0 +1,3 @@
+# Track directory structure but not data files
+*.json
+!.gitignore 

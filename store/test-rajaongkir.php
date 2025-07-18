@@ -31,7 +31,7 @@ if ($citiesData) {
 }
 
 // Test 4: Test cost calculation
-echo "<h3>Test 4: Cost Calculation (Bandung to Jakarta, JNE)</h3>";
+echo "<h3>Test 4: Cost Calculation (Bandung to Jakarta, JNE - focusing on REG service)</h3>";
 $costData = [
     'origin' => 23,      // Bandung
     'destination' => 151, // Jakarta
@@ -49,11 +49,26 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 echo "<p>HTTP Code: $httpCode</p>";
+$responseData = json_decode($costResponse, true);
+if ($responseData && isset($responseData['rajaongkir']['results'][0]['costs'])) {
+    $services = $responseData['rajaongkir']['results'][0]['costs'];
+    $regService = array_filter($services, function($service) {
+        return $service['service'] === 'REG';
+    });
+    
+    if (!empty($regService)) {
+        echo "<p><strong>REG Service Found:</strong></p>";
+        echo "<pre>" . json_encode(array_values($regService)[0], JSON_PRETTY_PRINT) . "</pre>";
+    } else {
+        echo "<p><strong>REG Service Not Found</strong></p>";
+    }
+}
 echo "<pre>$costResponse</pre>";
 
-// Test 5: Test with JNT
-echo "<h3>Test 5: Cost Calculation (Bandung to Jakarta, JNT)</h3>";
-$costData['courier'] = 'jnt';
+// Test 5: Test with different destination (Bandung to Surabaya, JNE - focusing on REG service)
+echo "<h3>Test 5: Cost Calculation (Bandung to Surabaya, JNE - focusing on REG service)</h3>";
+$costData['destination'] = 444; // Surabaya
+$costData['courier'] = 'jne';
 
 $ch = curl_init();
 curl_setopt($ch, CURLOPT_URL, "rajaongkir-proxy.php?action=cost");
@@ -65,6 +80,20 @@ $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 curl_close($ch);
 
 echo "<p>HTTP Code: $httpCode</p>";
+$responseData = json_decode($costResponse, true);
+if ($responseData && isset($responseData['rajaongkir']['results'][0]['costs'])) {
+    $services = $responseData['rajaongkir']['results'][0]['costs'];
+    $regService = array_filter($services, function($service) {
+        return $service['service'] === 'REG';
+    });
+    
+    if (!empty($regService)) {
+        echo "<p><strong>REG Service Found:</strong></p>";
+        echo "<pre>" . json_encode(array_values($regService)[0], JSON_PRETTY_PRINT) . "</pre>";
+    } else {
+        echo "<p><strong>REG Service Not Found</strong></p>";
+    }
+}
 echo "<pre>$costResponse</pre>";
 
 // Test 6: Direct API test (for comparison)
