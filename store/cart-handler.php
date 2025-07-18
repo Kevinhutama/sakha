@@ -22,9 +22,10 @@ $size_id = isset($_POST['size_id']) ? intval($_POST['size_id']) : null;
 $quantity = isset($_POST['quantity']) ? intval($_POST['quantity']) : 1;
 
 // Custom name options
-$pouch_custom_enabled = isset($_POST['pouch_custom_enabled']) ? true : false;
+
+$pouch_custom_enabled = !empty($_POST['pouch_custom_enabled']) && $_POST['pouch_custom_enabled'] == '1' ? 1 : 0;
 $pouch_custom_name = isset($_POST['pouch_custom_name']) ? trim($_POST['pouch_custom_name']) : null;
-$sajadah_custom_enabled = isset($_POST['sajadah_custom_enabled']) ? true : false;
+$sajadah_custom_enabled = !empty($_POST['sajadah_custom_enabled']) && $_POST['sajadah_custom_enabled'] == '1' ? 1 : 0;
 $sajadah_custom_name = isset($_POST['sajadah_custom_name']) ? trim($_POST['sajadah_custom_name']) : null;
 $font_style = isset($_POST['font_style']) ? trim($_POST['font_style']) : null;
 

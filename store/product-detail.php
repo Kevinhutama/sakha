@@ -418,9 +418,9 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
                   <input type="hidden" name="product_id" value="<?php echo $product['id']; ?>">
                   <input type="hidden" name="color_id" id="selected_color_id" value="<?php echo $colors[0]['id'] ?? ''; ?>">
                   <input type="hidden" name="size_id" id="selected_size_id" value="<?php echo $sizes[0]['id'] ?? ''; ?>">
-                  <input type="hidden" name="pouch_custom_enabled" id="pouch_custom_enabled_input" value="">
+                  <input type="hidden" name="pouch_custom_enabled" id="pouch_custom_enabled_input" value="0">
                   <input type="hidden" name="pouch_custom_name" id="pouch_custom_name_input" value="">
-                  <input type="hidden" name="sajadah_custom_enabled" id="sajadah_custom_enabled_input" value="">
+                  <input type="hidden" name="sajadah_custom_enabled" id="sajadah_custom_enabled_input" value="0">
                   <input type="hidden" name="sajadah_custom_name" id="sajadah_custom_name_input" value="">
                   <input type="hidden" name="font_style" id="font_style_input" value="">
                   
@@ -1328,10 +1328,10 @@ function buildColorUrl($color_name, $product_slug, $product_id) {
             var pouchEnabled = $('#enablePouchName').is(':checked');
             var sajadahEnabled = $('#enableSajadahName').is(':checked');
             
-            $('#pouch_custom_enabled_input').val(pouchEnabled ? '1' : '');
+            $('#pouch_custom_enabled_input').val(pouchEnabled ? '1' : '0');
             $('#pouch_custom_name_input').val(pouchEnabled ? $('#pouchNameText').val() : '');
             
-            $('#sajadah_custom_enabled_input').val(sajadahEnabled ? '1' : '');
+            $('#sajadah_custom_enabled_input').val(sajadahEnabled ? '1' : '0');
             $('#sajadah_custom_name_input').val(sajadahEnabled ? $('#sajadahNameText').val() : '');
             
             // Font style

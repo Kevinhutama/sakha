@@ -129,22 +129,22 @@ $page_title = "Shopping Cart - Sakha";
               <table class="table">
                 <thead class="text-uppercase">
                   <tr>
-                    <th scope="col">Product</th>
-                    <th scope="col">Quantity</th>
-                    <th scope="col">Subtotal</th>
-                    <th scope="col"></th>
+                    <th scope="col" style="width: 50%;">Product</th>
+                    <th scope="col" style="width: 15%;">Quantity</th>
+                    <th scope="col" style="width: 20%;">Subtotal</th>
+                    <th scope="col" style="width: 15%;"></th>
                   </tr>
                 </thead>
                 <tbody>
                   <?php foreach ($cartItems as $item): ?>
                     <tr class="border-bottom border-dark" data-cart-id="<?php echo $item['id']; ?>">
-                      <td class="align-middle border-0" scope="row">
+                      <td class="align-middle border-0" scope="row" style="width: 50%;">
                         <div class="cart-product-detail d-flex align-items-center">
                           <div class="card-image">
                             <?php 
                             $productImage = !empty($item['primary_image']) ? $item['primary_image'] : 'images/products/default-product.jpg';
                             ?>
-                            <img src="<?php echo htmlspecialchars($productImage); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" class="img-fluid" style="width: 80px; height: 80px; object-fit: cover;">
+                            <img src="<?php echo htmlspecialchars($productImage); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" class="img-fluid" style="width: 160px; height: 160px; object-fit: cover;">
                           </div>
                           <div class="card-detail ps-3">
                             <h5 class="card-title fs-3 text-capitalize">
@@ -171,14 +171,16 @@ $page_title = "Shopping Cart - Sakha";
                                 <?php endif; ?>
                               </div>
                             <?php endif; ?>
-                            <span class="item-price text-primary fs-3 fw-light"><?php echo formatPrice($item['base_price']); ?></span>
                             <?php if ($item['discounted_price'] && $item['discounted_price'] < $item['base_price']): ?>
+                              <span class="item-price text-primary fs-3 fw-light"><?php echo formatPrice($item['discounted_price']); ?></span>
                               <small class="text-muted"><del><?php echo formatPrice($item['base_price']); ?></del></small>
+                            <?php else: ?>
+                              <span class="item-price text-primary fs-3 fw-light"><?php echo formatPrice($item['base_price']); ?></span>
                             <?php endif; ?>
                           </div>
                         </div>
                       </td>
-                      <td class="align-middle border-0">
+                      <td class="align-middle border-0"  style="width: 15%;>
                         <form class="update-quantity-form" method="POST" action="cart-update.php">
                           <input type="hidden" name="cart_item_id" value="<?php echo $item['id']; ?>">
                           <input type="hidden" name="action" value="update_quantity">
@@ -197,10 +199,10 @@ $page_title = "Shopping Cart - Sakha";
                           </div>
                         </form>
                       </td>
-                      <td class="align-middle border-0">
+                      <td class="align-middle border-0" style="width: 20%;">
                         <span class="item-total text-primary fs-3 fw-medium"><?php echo formatPrice($item['item_total']); ?></span>
                       </td>
-                      <td class="align-middle border-0 cart-remove">
+                      <td class="align-middle border-0 cart-remove" style="width: 15%;">
                         <form method="POST" action="cart-update.php" style="display: inline;">
                           <input type="hidden" name="cart_item_id" value="<?php echo $item['id']; ?>">
                           <input type="hidden" name="action" value="remove_item">
