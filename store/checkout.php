@@ -88,6 +88,70 @@ $page_title = "Checkout - Sakha";
       .cart-item .text-muted {
         font-size: 0.8rem;
       }
+      
+      .shipping-options {
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      
+      .shipping-option {
+        border: 1px solid #dee2e6;
+        border-radius: 5px;
+        padding: 10px;
+        margin-bottom: 10px;
+        transition: all 0.2s ease;
+      }
+      
+      .shipping-option:hover {
+        border-color: #007bff;
+        background-color: #f8f9fa;
+      }
+      
+      .shipping-option.selected {
+        border-color: #007bff;
+        background-color: #e7f3ff;
+      }
+      
+      .courier-selection {
+        font-weight: 500;
+      }
+      
+      .courier-selection select {
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        padding: 8px 12px;
+        font-size: 14px;
+      }
+      
+      .rajaongkir-error {
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-left: 4px solid #dc3545;
+      }
+      
+      .rajaongkir-error .fas {
+        margin-right: 5px;
+      }
+      
+      .text-warning {
+        background-color: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 4px;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      
+      .text-danger {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        border-radius: 4px;
+        padding: 10px;
+        margin-bottom: 10px;
+      }
+      
+      .shipping-error-icon {
+        color: #dc3545;
+        margin-right: 5px;
+      }
     </style>
     <!-- script
     ================================================== -->
@@ -189,8 +253,24 @@ $page_title = "Checkout - Sakha";
                 </div>
 
                 <div class="py-3">
+                  <label for="city">City *</label>
+                  <select id="city" name="city" class="w-100" aria-label="Select City">
+                    <option selected="" hidden="">Select City</option>
+                  </select>
+                </div>
+
+                <div class="py-3">
                   <label for="zip">Postal Code *</label>
                   <input type="text" id="zip" name="zip" class="w-100" placeholder="e.g. 12345">
+                </div>
+
+                <div class="py-3 courier-selection">
+                  <label for="courier">Preferred Courier *</label>
+                  <select id="courier" name="courier" class="w-100" aria-label="Select Courier">
+                    <option selected="" hidden="">Select Courier</option>
+                    <option value="jne">JNE</option>
+                    <option value="jnt">JNT</option>
+                  </select>
                 </div>
             
               </div>
@@ -279,10 +359,18 @@ $page_title = "Checkout - Sakha";
                         </td>
                       </tr>
                       <?php endif; ?>
+                      <tr class="shipping-cost border-bottom border-dark pt-2 pb-2 text-uppercase" id="shipping-row" style="display: none;">
+                        <th>Shipping Cost</th>
+                        <td data-title="Shipping Cost">
+                          <div id="shipping-options">
+                            <div class="text-muted">Please select city and courier to calculate shipping cost</div>
+                          </div>
+                        </td>
+                      </tr>
                       <tr class="order-total border-bottom border-dark pt-2 pb-2 text-uppercase">
                         <th>Total</th>
                         <td data-title="Total">
-                          <span class="price-amount amount text-primary ps-5 fw-bold fs-5">
+                          <span class="price-amount amount text-primary ps-5 fw-bold fs-5" id="final-total">
                             <?php echo formatPrice($total); ?>
                           </span>
                         </td>
@@ -444,6 +532,334 @@ $page_title = "Checkout - Sakha";
     <script type="text/javascript" src="js/script.js"></script>
     <!-- Google Maps API -->
     <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAef_gZXRvK3y4TP666us0NglEXRqcXKmM&libraries=places&callback=initMap" async defer></script>
+    
+    <!-- Rajaongkir Integration -->
+    <script>
+        // Configuration
+        const PROXY_URL = 'rajaongkir-proxy.php';
+        
+        let subtotalAmount = <?php echo $total; ?>;
+        let selectedShippingCost = 0;
+        let totalWeight = 1000; // Default weight in grams (1kg) - you can calculate this based on cart items
+        let originCityId = '23'; // Bandung city ID - CHANGE THIS TO YOUR STORE'S CITY ID
+        
+        // Popular city IDs for reference:
+        // Jakarta: 151, Surabaya: 444, Bandung: 23, Medan: 153, Semarang: 398
+        // Yogyakarta: 501, Malang: 176, Denpasar: 114, Makassar: 175
+        
+        // Load cities when province is selected
+        document.getElementById('province').addEventListener('change', function() {
+            const selectedProvince = this.value;
+            clearErrorMessages(); // Clear any previous errors
+            
+            if (selectedProvince) {
+                loadCities(selectedProvince);
+            } else {
+                document.getElementById('city').innerHTML = '<option selected="" hidden="">Select City</option>';
+                hideShippingOptions();
+            }
+        });
+        
+        // Calculate shipping when city is selected
+        document.getElementById('city').addEventListener('change', function() {
+            const selectedCity = this.value;
+            const selectedCourier = document.getElementById('courier').value;
+            clearErrorMessages(); // Clear any previous errors
+            
+            if (selectedCity && selectedCourier) {
+                calculateShipping(selectedCity, selectedCourier);
+            } else if (selectedCity || selectedCourier) {
+                showShippingMessage();
+            } else {
+                hideShippingOptions();
+            }
+        });
+        
+        // Calculate shipping when courier is selected
+        document.getElementById('courier').addEventListener('change', function() {
+            const selectedCourier = this.value;
+            const selectedCity = document.getElementById('city').value;
+            clearErrorMessages(); // Clear any previous errors
+            
+            if (selectedCity && selectedCourier) {
+                calculateShipping(selectedCity, selectedCourier);
+            } else if (selectedCity || selectedCourier) {
+                showShippingMessage();
+            } else {
+                hideShippingOptions();
+            }
+        });
+        
+        function loadCities(provinceName) {
+            const citySelect = document.getElementById('city');
+            citySelect.innerHTML = '<option selected="" hidden="">Loading cities...</option>';
+            
+            // First, get province ID
+            fetch(`${PROXY_URL}?action=provinces`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.error) {
+                        throw new Error(data.error);
+                    }
+                    
+                    if (data.rajaongkir && data.rajaongkir.status.code === 200) {
+                        const provinces = data.rajaongkir.results;
+                        const province = provinces.find(p => p.province.toLowerCase() === provinceName.toLowerCase());
+                        
+                        if (province) {
+                            // Load cities for this province
+                            fetch(`${PROXY_URL}?action=cities&province_id=${province.province_id}`)
+                                .then(response => {
+                                    if (!response.ok) {
+                                        throw new Error(`HTTP error! status: ${response.status}`);
+                                    }
+                                    return response.json();
+                                })
+                                .then(data => {
+                                    if (data.error) {
+                                        throw new Error(data.error);
+                                    }
+                                    
+                                    if (data.rajaongkir && data.rajaongkir.status.code === 200) {
+                                        const cities = data.rajaongkir.results;
+                                        
+                                        citySelect.innerHTML = '<option selected="" hidden="">Select City</option>';
+                                        cities.forEach(city => {
+                                            const option = document.createElement('option');
+                                            option.value = city.city_id;
+                                            option.text = `${city.type} ${city.city_name}`;
+                                            citySelect.appendChild(option);
+                                        });
+                                    } else {
+                                        const errorMsg = data.rajaongkir ? data.rajaongkir.status.description : 'Unknown API error';
+                                        console.error('Failed to load cities:', errorMsg);
+                                        citySelect.innerHTML = `<option selected="" hidden="">Error: ${errorMsg}</option>`;
+                                        showErrorMessage(`Failed to load cities: ${errorMsg}`);
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error loading cities:', error);
+                                    citySelect.innerHTML = `<option selected="" hidden="">Error: ${error.message}</option>`;
+                                    showErrorMessage(`Error loading cities: ${error.message}`);
+                                });
+                        } else {
+                            console.error('Province not found:', provinceName);
+                            citySelect.innerHTML = '<option selected="" hidden="">Province not found</option>';
+                            showErrorMessage(`Province "${provinceName}" not found in Rajaongkir database`);
+                        }
+                    } else {
+                        const errorMsg = data.rajaongkir ? data.rajaongkir.status.description : 'Unknown API error';
+                        console.error('Failed to load provinces:', errorMsg);
+                        citySelect.innerHTML = `<option selected="" hidden="">Error: ${errorMsg}</option>`;
+                        showErrorMessage(`Failed to load provinces: ${errorMsg}`);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading provinces:', error);
+                    citySelect.innerHTML = `<option selected="" hidden="">Error: ${error.message}</option>`;
+                    showErrorMessage(`Error loading provinces: ${error.message}`);
+                });
+        }
+        
+        function calculateShipping(destinationCityId, selectedCourier) {
+            const weight = totalWeight;
+            
+            // Show loading state
+            document.getElementById('shipping-row').style.display = 'table-row';
+            document.getElementById('shipping-options').innerHTML = '<div class="text-muted">Calculating shipping costs...</div>';
+            
+            // Get shipping costs for selected courier only
+            getShippingCost(originCityId, destinationCityId, weight, selectedCourier)
+                .then(result => {
+                    displayShippingOptions([result]);
+                })
+                .catch(error => {
+                    console.error('Error calculating shipping:', error);
+                    const errorMessage = error.message || 'Unknown error occurred';
+                    document.getElementById('shipping-options').innerHTML = `<div class="text-danger"><i class="fas fa-exclamation-triangle"></i> Error: ${errorMessage}</div>`;
+                    showErrorMessage(`Shipping calculation failed: ${errorMessage}`);
+                });
+        }
+        
+        function getShippingCost(origin, destination, weight, courier) {
+            const formData = new FormData();
+            
+            // Ensure proper data types
+            formData.append('origin', parseInt(origin));
+            formData.append('destination', parseInt(destination));
+            formData.append('weight', parseInt(weight));
+            formData.append('courier', courier.toLowerCase());
+            
+            // Debug logging
+            console.log('Sending shipping request:', {
+                origin: parseInt(origin),
+                destination: parseInt(destination),
+                weight: parseInt(weight),
+                courier: courier.toLowerCase()
+            });
+            
+            return fetch(`${PROXY_URL}?action=cost`, {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    throw new Error(data.error);
+                }
+                
+                if (data.rajaongkir && data.rajaongkir.status.code === 200) {
+                    const results = data.rajaongkir.results;
+                    if (!results || results.length === 0) {
+                        throw new Error(`No shipping services found for ${courier.toUpperCase()}`);
+                    }
+                    
+                    return {
+                        courier: courier.toUpperCase(),
+                        services: results[0]?.costs || []
+                    };
+                } else {
+                    const errorMsg = data.rajaongkir ? data.rajaongkir.status.description : 'Unknown API error';
+                    throw new Error(`${courier.toUpperCase()} shipping cost calculation failed: ${errorMsg}`);
+                }
+            })
+            .catch(error => {
+                // Re-throw with more context
+                throw new Error(`Failed to get ${courier.toUpperCase()} shipping cost: ${error.message}`);
+            });
+        }
+        
+        function displayShippingOptions(shippingResults) {
+            let html = '<div class="shipping-options">';
+            
+            const result = shippingResults[0]; // Since we're only showing one courier now
+            
+            if (result && result.services.length > 0) {
+                html += `<div class="mb-3">
+                    <h6 class="text-primary mb-3">${result.courier} Shipping Options</h6>`;
+                
+                result.services.forEach(service => {
+                    const cost = service.cost[0];
+                    html += `<div class="shipping-option mb-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="shipping" id="shipping_${result.courier.toLowerCase()}_${service.service}" value="${cost.value}" data-courier="${result.courier}" data-service="${service.service}" data-etd="${cost.etd}">
+                            <label class="form-check-label w-100" for="shipping_${result.courier.toLowerCase()}_${service.service}">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <div class="fw-bold">${service.service}</div>
+                                        <div class="text-muted small">${service.description}</div>
+                                        <div class="text-success small">
+                                            <i class="fas fa-clock"></i> Estimasi: ${cost.etd} hari
+                                        </div>
+                                    </div>
+                                    <div class="text-primary fw-bold fs-6">
+                                        RP ${parseInt(cost.value).toLocaleString()}
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                    </div>`;
+                });
+                
+                html += '</div>';
+            } else {
+                const courierName = result ? result.courier : 'selected courier';
+                html = `<div class="text-warning">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    No shipping options available for this destination with ${courierName}
+                </div>`;
+                
+                // Show error message
+                if (result) {
+                    showErrorMessage(`${result.courier} does not provide shipping services to this destination`);
+                }
+            }
+            
+            html += '</div>';
+            
+            document.getElementById('shipping-options').innerHTML = html;
+            
+            // Add event listeners to shipping options
+            document.querySelectorAll('input[name="shipping"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    selectedShippingCost = parseInt(this.value);
+                    updateTotal();
+                    
+                    // Update visual selection
+                    document.querySelectorAll('.shipping-option').forEach(option => {
+                        option.classList.remove('selected');
+                    });
+                    this.closest('.shipping-option').classList.add('selected');
+                });
+            });
+        }
+        
+        function hideShippingOptions() {
+            document.getElementById('shipping-row').style.display = 'none';
+            selectedShippingCost = 0;
+            updateTotal();
+        }
+        
+        function showShippingMessage() {
+            document.getElementById('shipping-row').style.display = 'table-row';
+            document.getElementById('shipping-options').innerHTML = '<div class="text-muted">Please select city and courier to calculate shipping cost</div>';
+            selectedShippingCost = 0;
+            updateTotal();
+        }
+        
+        function updateTotal() {
+            const finalTotal = subtotalAmount + selectedShippingCost;
+            document.getElementById('final-total').innerHTML = `RP ${finalTotal.toLocaleString()}`;
+        }
+        
+        function formatPrice(price) {
+            return `RP ${parseInt(price).toLocaleString()}`;
+        }
+        
+        function showErrorMessage(message) {
+            // Remove any existing error messages
+            clearErrorMessages();
+            
+            // Create error alert
+            const errorAlert = document.createElement('div');
+            errorAlert.className = 'alert alert-danger alert-dismissible fade show rajaongkir-error';
+            errorAlert.style.position = 'fixed';
+            errorAlert.style.top = '20px';
+            errorAlert.style.right = '20px';
+            errorAlert.style.zIndex = '9999';
+            errorAlert.style.maxWidth = '400px';
+            errorAlert.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i> 
+                <strong>Shipping Error:</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            `;
+            
+            document.body.appendChild(errorAlert);
+            
+            // Auto-dismiss after 8 seconds
+            setTimeout(() => {
+                if (errorAlert.parentNode) {
+                    errorAlert.remove();
+                }
+            }, 8000);
+        }
+        
+        function clearErrorMessages() {
+            const existingErrors = document.querySelectorAll('.rajaongkir-error');
+            existingErrors.forEach(error => error.remove());
+        }
+    </script>
+    
     <script>
         let map;
         let marker;
@@ -573,7 +989,6 @@ $page_title = "Checkout - Sakha";
 
         function updateFormFields(place) {
             // Clear existing values
-            document.getElementById('city').value = '';
             document.getElementById('zip').value = '';
 
             let streetNumber = '';
@@ -592,10 +1007,6 @@ $page_title = "Checkout - Sakha";
                         streetName = component.long_name;
                     }
                     
-                    if (types.includes('locality')) {
-                        document.getElementById('city').value = component.long_name;
-                    }
-                    
                     if (types.includes('postal_code')) {
                         document.getElementById('zip').value = component.long_name;
                     }
@@ -611,6 +1022,8 @@ $page_title = "Checkout - Sakha";
                                 if (option.text.toLowerCase().includes(provinceName.toLowerCase()) || 
                                     option.text.toLowerCase().includes(component.short_name.toLowerCase())) {
                                     option.selected = true;
+                                    // Trigger change event to load cities
+                                    provinceSelect.dispatchEvent(new Event('change'));
                                     break;
                                 }
                             }
