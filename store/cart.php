@@ -90,23 +90,7 @@ $page_title = "Shopping Cart - Sakha";
       <?php unset($_SESSION['cart_error']); ?>
     <?php endif; ?>
     
-    <section class="hero-section jarallax d-flex align-items-center justify-content-center padding-medium pb-5" style="background: url(images/hero-img.jpg) no-repeat; margin-top: <?php echo (isset($_SESSION['cart_success']) || isset($_SESSION['cart_error'])) ? '0' : '70px'; ?>;">
-      <div class="hero-content">
-        <div class="container">
-          <div class="row">
-            <div class="text-center padding-large no-padding-bottom">
-              <h1>Cart</h1>
-              <div class="breadcrumbs">
-                <span class="item">
-                  <a href="index.php">Home ></a>
-                </span>
-                <span class="item">Cart</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+    
     
     <section class="shopify-cart padding-large">
       <div class="container">
@@ -180,7 +164,7 @@ $page_title = "Shopping Cart - Sakha";
                           </div>
                         </div>
                       </td>
-                      <td class="align-middle border-0"  style="width: 15%;>
+                      <td class="align-middle border-0"  style="width: 15%;">
                         <form class="update-quantity-form" method="POST" action="cart-update.php">
                           <input type="hidden" name="cart_item_id" value="<?php echo $item['id']; ?>">
                           <input type="hidden" name="action" value="update_quantity">
@@ -218,11 +202,6 @@ $page_title = "Shopping Cart - Sakha";
                 </tbody>
               </table>
               <div class="cart-bottom d-flex flex-wrap justify-content-between align-items-center pt-2">
-                <form action="cart-update.php" method="POST" class="d-flex flex-wrap justify-content-between">
-                  <input type="hidden" name="action" value="apply_coupon">
-                  <input type="text" name="coupon_code" class="border border-dark p-2 me-1 mb-2" placeholder="Coupon Code">
-                  <button type="submit" class="btn btn-dark mb-2">Apply Coupon</button>
-                </form>
                 <a href="shop.php" class="btn btn-dark mb-2">Continue Shopping</a>
               </div>
             </div>
@@ -393,40 +372,67 @@ $page_title = "Shopping Cart - Sakha";
     
     <script>
     $(document).ready(function() {
-        // Handle quantity change
+        // Handle quantity change with 1-second debounce
         $('.quantity-right-plus, .quantity-left-minus').on('click', function(e) {
             e.preventDefault();
             
-            var $input = $(this).closest('.product-qty').find('input[name="quantity"]');
+            var $button = $(this);
+            var $form = $button.closest('.update-quantity-form');
+            var $input = $form.find('input[name="quantity"]');
             var currentVal = parseInt($input.val());
-            var type = $(this).data('type');
+            var originalVal = parseInt($input.data('original'));
+            var type = $button.data('type');
+            var newVal = currentVal;
             
             if (type === 'plus') {
-                $input.val(currentVal + 1);
+                newVal = currentVal + 1;
             } else if (type === 'minus' && currentVal > 1) {
-                $input.val(currentVal - 1);
+                newVal = currentVal - 1;
             }
             
-            // Auto-submit the form after quantity change
-            var originalVal = parseInt($input.data('original'));
-            var newVal = parseInt($input.val());
-            
-            if (originalVal !== newVal) {
-                // Debounce the submission
-                clearTimeout($input.data('submitTimer'));
-                $input.data('submitTimer', setTimeout(function() {
-                    $input.closest('.update-quantity-form').submit();
+            // Only proceed if the value actually changed
+            if (newVal !== currentVal) {
+                // Update the input value
+                $input.val(newVal);
+                
+                // Clear any existing timeout
+                clearTimeout($form.data('submitTimer'));
+                
+                // Set a new timeout to submit after 1 second
+                $form.data('submitTimer', setTimeout(function() {
+                    // Only submit if the value has actually changed from original
+                    if (parseInt($input.val()) !== originalVal) {
+                        console.log('Submitting form for cart item:', $form.find('input[name="cart_item_id"]').val(), 'New quantity:', $input.val());
+                        $form.submit();
+                    }
                 }, 1000));
             }
         });
         
-        // Handle manual quantity input
-        $('input[name="quantity"]').on('change', function() {
-            var originalVal = parseInt($(this).data('original'));
-            var newVal = parseInt($(this).val());
+        // Handle manual quantity input with 1-second debounce
+        $('input[name="quantity"]').on('input change', function() {
+            var $input = $(this);
+            var $form = $input.closest('.update-quantity-form');
+            var originalVal = parseInt($input.data('original'));
+            var newVal = parseInt($input.val());
             
-            if (originalVal !== newVal && newVal >= 1) {
-                $(this).closest('.update-quantity-form').submit();
+            // Ensure minimum value of 1
+            if (newVal < 1) {
+                newVal = 1;
+                $input.val(newVal);
+            }
+            
+            if (originalVal !== newVal) {
+                // Clear any existing timeout
+                clearTimeout($form.data('submitTimer'));
+                
+                // Set a new timeout to submit after 1 second
+                $form.data('submitTimer', setTimeout(function() {
+                    if (parseInt($input.val()) !== originalVal) {
+                        console.log('Submitting form for cart item:', $form.find('input[name="cart_item_id"]').val(), 'New quantity:', $input.val());
+                        $form.submit();
+                    }
+                }, 1000));
             }
         });
         

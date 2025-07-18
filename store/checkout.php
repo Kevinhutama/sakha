@@ -1,11 +1,44 @@
 <?php
 // Initialize session
 require_once 'includes/session-config.php';
+
+// Include cart functions
+require_once 'includes/cart-functions.php';
+
+// Check if user is logged in
+$isLoggedIn = isset($_SESSION['user_id']) && !empty($_SESSION['user_id']);
+$user_id = $isLoggedIn ? $_SESSION['user_id'] : null;
+$session_id = session_id();
+
+// Get cart data
+$cartItems = getCartItems($user_id, $session_id);
+$cartSummary = getCartSummary($user_id, $session_id);
+$cartCount = getCartCount($user_id, $session_id);
+
+// Calculate totals
+$subtotal = 0;
+$customAdditions = 0;
+$total = 0;
+
+if ($cartSummary) {
+    $subtotal = $cartSummary['subtotal'] ?? 0;
+    $customAdditions = $cartSummary['custom_additions'] ?? 0;
+    $total = $cartSummary['total_amount'] ?? 0;
+}
+
+// Redirect to cart if empty
+if (empty($cartItems)) {
+    header('Location: cart.php');
+    exit();
+}
+
+// Page title
+$page_title = "Checkout - Sakha";
 ?>
 <!DOCTYPE html>
 <html>
   <head>
-    <title>Vaso Ecommerce Template</title>
+    <title><?php echo $page_title; ?></title>
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -22,6 +55,40 @@ require_once 'includes/session-config.php';
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Italiana&family=Mulish:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;0,1000;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900;1,1000&display=swap" rel="stylesheet">
+    
+    <style>
+      .cart-items {
+        max-height: 400px;
+        overflow-y: auto;
+      }
+      
+      .cart-item {
+        transition: background-color 0.2s ease;
+      }
+      
+      .cart-item:hover {
+        background-color: #f8f9fa;
+        border-radius: 5px;
+        padding: 10px;
+      }
+      
+      .cart-item img {
+        border: 1px solid #dee2e6;
+      }
+      
+      .cart-item .small {
+        line-height: 1.4;
+      }
+      
+      .cart-item .text-success {
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+      
+      .cart-item .text-muted {
+        font-size: 0.8rem;
+      }
+    </style>
     <!-- script
     ================================================== -->
     <script src="js/modernizr.js"></script>
@@ -135,7 +202,62 @@ require_once 'includes/session-config.php';
                 <textarea class="w-100" placeholder="Notes about your order. Like special notes for delivery."></textarea>
               </div>
               <div class="your-order mt-5">
-                <h3 class="pb-4">Cart Totals</h3>
+                <h3 class="pb-4">Your Order</h3>
+                
+                <!-- Cart Items -->
+                <div class="cart-items mb-4">
+                  <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">Items in Cart (<?php echo count($cartItems); ?>)</h5>
+                    <a href="cart.php" class="btn btn-sm btn-outline-primary">Edit Cart</a>
+                  </div>
+                  <?php foreach ($cartItems as $item): ?>
+                    <div class="cart-item border-bottom pb-3 mb-3">
+                      <div class="row align-items-center">
+                        <div class="col-3">
+                          <?php 
+                          $productImage = !empty($item['primary_image']) ? $item['primary_image'] : 'images/products/default-product.jpg';
+                          ?>
+                          <img src="<?php echo htmlspecialchars($productImage); ?>" alt="<?php echo htmlspecialchars($item['product_name']); ?>" class="img-fluid" style="width: 60px; height: 60px; object-fit: cover; border-radius: 5px;">
+                        </div>
+                        <div class="col-6">
+                          <h6 class="mb-1 fs-6"><?php echo htmlspecialchars($item['product_name']); ?></h6>
+                          <div class="small text-muted">
+                            <?php if ($item['color_name']): ?>
+                              <span>Color: <?php echo htmlspecialchars($item['color_name']); ?></span>
+                            <?php endif; ?>
+                            <?php if ($item['size_name']): ?>
+                              <span><?php echo $item['color_name'] ? ' | ' : ''; ?>Size: <?php echo htmlspecialchars($item['size_name']); ?></span>
+                            <?php endif; ?>
+                            <div>Qty: <?php echo $item['quantity']; ?></div>
+                            
+                            <?php if ($item['pouch_custom_enabled'] && !empty($item['pouch_custom_name'])): ?>
+                              <div class="text-success">
+                                <i class="fas fa-plus"></i> Pouch: "<?php echo htmlspecialchars($item['pouch_custom_name']); ?>"
+                              </div>
+                            <?php endif; ?>
+                            
+                            <?php if ($item['sajadah_custom_enabled'] && !empty($item['sajadah_custom_name'])): ?>
+                              <div class="text-success">
+                                <i class="fas fa-plus"></i> Sajadah: "<?php echo htmlspecialchars($item['sajadah_custom_name']); ?>"
+                              </div>
+                            <?php endif; ?>
+                            
+                            <?php if (!empty($item['font_style'])): ?>
+                              <div class="text-muted">
+                                <i class="fas fa-font"></i> Font: <?php echo htmlspecialchars($item['font_style']); ?>
+                              </div>
+                            <?php endif; ?>
+                          </div>
+                        </div>
+                        <div class="col-3 text-end">
+                          <span class="fw-bold text-primary"><?php echo formatPrice($item['item_total']); ?></span>
+                        </div>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+
+                <!-- Order Summary -->
                 <div class="total-price">
                   <table cellspacing="0" class="table">
                     <tbody>
@@ -143,17 +265,25 @@ require_once 'includes/session-config.php';
                         <th>Subtotal</th>
                         <td data-title="Subtotal">
                           <span class="price-amount amount text-primary ps-5">
-                            <bdi>
-                              <span class="price-currency-symbol">$</span>2,370.00 </bdi>
+                            <?php echo formatPrice($subtotal); ?>
                           </span>
                         </td>
                       </tr>
+                      <?php if ($customAdditions > 0): ?>
+                      <tr class="custom-additions border-bottom border-dark pt-2 pb-2 text-uppercase">
+                        <th>Custom Additions</th>
+                        <td data-title="Custom Additions">
+                          <span class="price-amount amount text-primary ps-5">
+                            <?php echo formatPrice($customAdditions); ?>
+                          </span>
+                        </td>
+                      </tr>
+                      <?php endif; ?>
                       <tr class="order-total border-bottom border-dark pt-2 pb-2 text-uppercase">
                         <th>Total</th>
                         <td data-title="Total">
-                          <span class="price-amount amount text-primary ps-5">
-                            <bdi>
-                              <span class="price-currency-symbol">$</span>2,370.00 </bdi>
+                          <span class="price-amount amount text-primary ps-5 fw-bold fs-5">
+                            <?php echo formatPrice($total); ?>
                           </span>
                         </td>
                       </tr>
