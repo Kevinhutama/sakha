@@ -52,70 +52,80 @@ require_once 'includes/session-config.php';
     </section>
     <section class="shopify-cart checkout-wrap padding-large">
       <div class="container">
-        <form class="form-group">
+        <form class="form-group" id="checkout-form">
           <div class="row d-flex flex-wrap">
             <div class="col-lg-7">
               <h3 class="pb-4">Billing Details</h3>
               <div class="billing-details">
                 <div class="py-3">
-                  <label for="fname">First Name*</label>
+                  <label for="fname">Name*</label>
                   <input type="text" id="fname" name="firstname" class="w-100">
                 </div>
 
                 <div class="py-3">
-                  <label for="lname">Last Name*</label>
-                  <input type="text" id="lname" name="lastname" class="w-100">
+                  <label for="phone">Phone Number*</label>
+                  <input type="tel" id="phone" name="phone" class="w-100" placeholder="e.g. 08123456789">
                 </div>
 
                 <div class="py-3">
-                  <label for="address">Street Address*</label>
-                  <input type="text" id="adr" name="address" placeholder="House number and street name" class="w-100">
-                  <input type="text" id="adr2" name="address2" placeholder="Appartments, suite, etc." class="w-100">
+                  <label for="province">Province *</label>
+                  <select id="province" name="province" class="w-100" aria-label="Select Province">
+                    <option selected="" hidden="">Select Province</option>
+                    <option value="Aceh">Aceh</option>
+                    <option value="Bali">Bali</option>
+                    <option value="Banten">Banten</option>
+                    <option value="Bengkulu">Bengkulu</option>
+                    <option value="DI Yogyakarta">DI Yogyakarta</option>
+                    <option value="DKI Jakarta">DKI Jakarta</option>
+                    <option value="Gorontalo">Gorontalo</option>
+                    <option value="Jambi">Jambi</option>
+                    <option value="Jawa Barat">Jawa Barat</option>
+                    <option value="Jawa Tengah">Jawa Tengah</option>
+                    <option value="Jawa Timur">Jawa Timur</option>
+                    <option value="Kalimantan Barat">Kalimantan Barat</option>
+                    <option value="Kalimantan Selatan">Kalimantan Selatan</option>
+                    <option value="Kalimantan Tengah">Kalimantan Tengah</option>
+                    <option value="Kalimantan Timur">Kalimantan Timur</option>
+                    <option value="Kalimantan Utara">Kalimantan Utara</option>
+                    <option value="Kepulauan Bangka Belitung">Kepulauan Bangka Belitung</option>
+                    <option value="Kepulauan Riau">Kepulauan Riau</option>
+                    <option value="Lampung">Lampung</option>
+                    <option value="Maluku">Maluku</option>
+                    <option value="Maluku Utara">Maluku Utara</option>
+                    <option value="Nusa Tenggara Barat">Nusa Tenggara Barat</option>
+                    <option value="Nusa Tenggara Timur">Nusa Tenggara Timur</option>
+                    <option value="Papua">Papua</option>
+                    <option value="Papua Barat">Papua Barat</option>
+                    <option value="Papua Barat Daya">Papua Barat Daya</option>
+                    <option value="Papua Pegunungan">Papua Pegunungan</option>
+                    <option value="Papua Selatan">Papua Selatan</option>
+                    <option value="Papua Tengah">Papua Tengah</option>
+                    <option value="Riau">Riau</option>
+                    <option value="Sulawesi Barat">Sulawesi Barat</option>
+                    <option value="Sulawesi Selatan">Sulawesi Selatan</option>
+                    <option value="Sulawesi Tengah">Sulawesi Tengah</option>
+                    <option value="Sulawesi Tenggara">Sulawesi Tenggara</option>
+                    <option value="Sulawesi Utara">Sulawesi Utara</option>
+                    <option value="Sumatera Barat">Sumatera Barat</option>
+                    <option value="Sumatera Selatan">Sumatera Selatan</option>
+                    <option value="Sumatera Utara">Sumatera Utara</option>
+                  </select>
                 </div>
 
                 <div class="py-3">
-                  <label for="map-search">Search Address on Map</label>
-                  <input type="text" id="map-search" placeholder="Search for your address in Indonesia..." class="w-100 mb-3">
+                  <label for="map-search">Street Address</label>
+                  <input type="text" id="map-search" placeholder="Your address ..." class="w-100 mb-3">
+                  
+                  <input type="text" id="adr2" name="address2" placeholder="Other details (e.g. yellow store, apartment, suite, landmarks, etc.)" class="w-100" style="margin-bottom: 10px;">
                   <div id="map" style="height: 300px; width: 100%; border: 1px solid #ddd; border-radius: 5px; background-color: #f8f9fa;"></div>
                   <small class="text-muted">Click on the map to select your address. You can also drag the marker to fine-tune your location.</small>
-                </div>
-
-                <div class="py-3">
-                  <label for="city">City *</label>
-                  <input type="text" id="city" name="city" class="w-100">
-                </div>
-
-                <div class="py-3">
-                  <label for="state">Province *</label>
-                  <select class="w-100" aria-label="Default select example">
-                    <option selected="" hidden="">DKI Jakarta</option>
-                    <option value="1">West Java</option>
-                    <option value="2">Central Java</option>
-                    <option value="3">East Java</option>
-                    <option value="4">Bali</option>
-                    <option value="5">North Sumatra</option>
-                    <option value="6">South Sumatra</option>
-                    <option value="7">West Sumatra</option>
-                    <option value="8">Yogyakarta</option>
-                    <option value="9">South Sulawesi</option>
-                    <option value="10">North Sulawesi</option>
-                  </select>
                 </div>
 
                 <div class="py-3">
                   <label for="zip">Postal Code *</label>
                   <input type="text" id="zip" name="zip" class="w-100" placeholder="e.g. 12345">
                 </div>
-
-                <div class="py-3">
-                  <label for="email">Phone *</label>
-                  <input type="text" id="phone" name="phone" class="w-100">
-                </div>
-                
-                <div class="py-3">
-                  <label for="email">Email address *</label>
-                  <input type="text" id="email" name="email" class="w-100">
-                </div>
+            
               </div>
             </div>
             <div class="col-lg-5">
@@ -311,10 +321,10 @@ require_once 'includes/session-config.php';
         let autocomplete;
 
         function initMap() {
-            // Initialize map centered on Jakarta, Indonesia
+            // Initialize map centered on Bandung, Indonesia
             map = new google.maps.Map(document.getElementById('map'), {
-                zoom: 11,
-                center: {lat: -6.2088, lng: 106.8456}
+                zoom: 12,
+                center: {lat: -6.9175, lng: 107.6191}
             });
 
             // Initialize geocoder
@@ -433,7 +443,6 @@ require_once 'includes/session-config.php';
 
         function updateFormFields(place) {
             // Clear existing values
-            document.getElementById('adr').value = '';
             document.getElementById('city').value = '';
             document.getElementById('zip').value = '';
 
@@ -463,8 +472,7 @@ require_once 'includes/session-config.php';
                     
                     if (types.includes('administrative_area_level_1')) {
                         // Update province dropdown if needed
-                        const stateSelects = document.querySelectorAll('select[aria-label="Default select example"]');
-                        const provinceSelect = stateSelects[1]; // Second dropdown is the province dropdown
+                        const provinceSelect = document.getElementById('province');
                         const provinceName = component.long_name;
                         
                         if (provinceSelect) {
@@ -481,16 +489,105 @@ require_once 'includes/session-config.php';
                 });
             }
 
-            // Combine street number and name
-            if (streetNumber && streetName) {
-                document.getElementById('adr').value = streetNumber + ' ' + streetName;
-            } else if (streetName) {
-                document.getElementById('adr').value = streetName;
-            } else if (place.formatted_address) {
-                // Fallback to formatted address
-                document.getElementById('adr').value = place.formatted_address;
+            // Update map-search field with formatted address
+            if (place.formatted_address) {
+                document.getElementById('map-search').value = place.formatted_address;
             }
         }
+
+        // Province coordinates for map centering
+        const provinceCoordinates = {
+            'Aceh': {lat: 4.695135, lng: 96.7493993},
+            'Bali': {lat: -8.4095178, lng: 115.188916},
+            'Banten': {lat: -6.4058172, lng: 106.0640179},
+            'Bengkulu': {lat: -3.7928451, lng: 102.2607641},
+            'DI Yogyakarta': {lat: -7.8753849, lng: 110.4262088},
+            'DKI Jakarta': {lat: -6.208763, lng: 106.845599},
+            'Gorontalo': {lat: 0.6999372, lng: 122.4467238},
+            'Jambi': {lat: -1.4851831, lng: 102.4380581},
+            'Jawa Barat': {lat: -6.9034443, lng: 107.6181927},
+            'Jawa Tengah': {lat: -7.150975, lng: 110.1402594},
+            'Jawa Timur': {lat: -7.5360639, lng: 112.2384017},
+            'Kalimantan Barat': {lat: -0.2787808, lng: 111.4752851},
+            'Kalimantan Selatan': {lat: -3.0926415, lng: 115.2837585},
+            'Kalimantan Tengah': {lat: -1.6814878, lng: 113.3823545},
+            'Kalimantan Timur': {lat: 1.6406296, lng: 116.419389},
+            'Kalimantan Utara': {lat: 3.0730929, lng: 116.0413889},
+            'Kepulauan Bangka Belitung': {lat: -2.7410513, lng: 106.4405872},
+            'Kepulauan Riau': {lat: 3.9456514, lng: 108.1428669},
+            'Lampung': {lat: -4.5585849, lng: 105.4068079},
+            'Maluku': {lat: -3.2384616, lng: 130.1452734},
+            'Maluku Utara': {lat: 1.5709993, lng: 127.8087693},
+            'Nusa Tenggara Barat': {lat: -8.6529334, lng: 117.3616476},
+            'Nusa Tenggara Timur': {lat: -8.6573819, lng: 121.0793705},
+            'Papua': {lat: -4.269928, lng: 138.0803529},
+            'Papua Barat': {lat: -1.3361154, lng: 133.1747162},
+            'Papua Barat Daya': {lat: -7.6145924, lng: 133.6926084},
+            'Papua Pegunungan': {lat: -4.0648911, lng: 138.3207261},
+            'Papua Selatan': {lat: -6.2288274, lng: 139.9419031},
+            'Papua Tengah': {lat: -3.3890292, lng: 136.3563742},
+            'Riau': {lat: 0.2933469, lng: 101.7068294},
+            'Sulawesi Barat': {lat: -2.8441371, lng: 119.2320784},
+            'Sulawesi Selatan': {lat: -3.6687994, lng: 119.9740534},
+            'Sulawesi Tengah': {lat: -1.4300254, lng: 121.4456179},
+            'Sulawesi Tenggara': {lat: -4.14491, lng: 122.174605},
+            'Sulawesi Utara': {lat: 0.6246932, lng: 123.9750018},
+            'Sumatera Barat': {lat: -0.7399397, lng: 100.8000051},
+            'Sumatera Selatan': {lat: -3.3194374, lng: 103.914399},
+            'Sumatera Utara': {lat: 2.1153547, lng: 99.5450974}
+        };
+
+        // Handle province selection
+        document.getElementById('province').addEventListener('change', function() {
+            const selectedProvince = this.value;
+            if (selectedProvince && provinceCoordinates[selectedProvince]) {
+                const coordinates = provinceCoordinates[selectedProvince];
+                
+                // Center map on selected province
+                map.setCenter(coordinates);
+                map.setZoom(8); // Appropriate zoom level for province view
+                
+                // Clear existing address search
+                document.getElementById('map-search').value = '';
+                
+                // Remove existing marker
+                if (marker) {
+                    marker.setMap(null);
+                }
+                
+                // Update autocomplete bounds to focus on selected province
+                const bounds = new google.maps.LatLngBounds();
+                const center = new google.maps.LatLng(coordinates.lat, coordinates.lng);
+                bounds.extend(center);
+                
+                // Expand bounds for better autocomplete results
+                const offset = 0.5; // degrees
+                bounds.extend(new google.maps.LatLng(coordinates.lat + offset, coordinates.lng + offset));
+                bounds.extend(new google.maps.LatLng(coordinates.lat - offset, coordinates.lng - offset));
+                
+                if (autocomplete) {
+                    autocomplete.setBounds(bounds);
+                }
+            }
+        });
+
+        // Prevent form submission on Enter key press
+        document.getElementById('checkout-form').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                return false;
+            }
+        });
+
+        // Also prevent Enter key on individual input fields
+        document.querySelectorAll('#checkout-form input, #checkout-form select, #checkout-form textarea').forEach(function(element) {
+            element.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    return false;
+                }
+            });
+        });
     </script>
     
     <?php include 'includes/auth-scripts.php'; ?>
